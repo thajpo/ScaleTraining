@@ -4,6 +4,7 @@ Functional training loop utilities.
 These helpers implement the training loop without an object-oriented trainer.
 Each function has a narrow purpose and explicit inputs/outputs.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -26,9 +27,13 @@ from scaletraining.util.training_utils import (
     scale_optimizer_lr,
     split_model_matrix_params,
     log_implementation,
-    estimate_flops
+    estimate_flops,
 )
-from scaletraining.util.wandb_utils import log_eval_metrics, log_train_metrics
+from scaletraining.util.wandb_utils import (
+    log_eval_metrics,
+    log_moe_metrics,
+    log_train_metrics,
+)
 
 
 def training_run(
@@ -56,11 +61,17 @@ def training_run(
     )
     if cfg.logging.log_implementation_details:
         log_implementation(matrix_params, other_params)
-        
-    opt_primary, opt_secondary = build_optimizers(cfg.optimizer, matrix_params, other_params)
 
-    primary_base_lr = (float(opt_primary.param_groups[0]["lr"]) if opt_primary is not None else 0.0)
-    secondary_base_lr = (float(opt_secondary.param_groups[0]["lr"]) if opt_secondary is not None else 0.0)
+    opt_primary, opt_secondary = build_optimizers(
+        cfg.optimizer, matrix_params, other_params
+    )
+
+    primary_base_lr = (
+        float(opt_primary.param_groups[0]["lr"]) if opt_primary is not None else 0.0
+    )
+    secondary_base_lr = (
+        float(opt_secondary.param_groups[0]["lr"]) if opt_secondary is not None else 0.0
+    )
 
     device = str(getattr(cfg, "device_resolved", None) or cfg.device.device)
     if device == "cuda" and not torch.cuda.is_available():
@@ -73,14 +84,45 @@ def training_run(
 
     stats = {"train_loss": []}
     used_tokens = 0
-    best_train_loss = float('inf')
+    best_train_loss = float("inf")
     tokens_at_best_loss = 0
-    early_stop_tokens = max(0, int(getattr(cfg.training, "early_stop_tokens_without_improvement", 0)))
+    early_stop_tokens = max(
+        0, int(getattr(cfg.training, "early_stop_tokens_without_improvement", 0))
+    )
     early_stop_min_delta = float(getattr(cfg.training, "early_stop_min_delta", 0.0))
     step_in_accum = 0
     accum_loss_sum = 0.0
     accum_token_count = 0
     last_eval_tokens = 0
+
+    def build_moe_metrics(model: nn.Module) -> dict:
+        if not hasattr(model, "moe_routing_stats"):
+            return {}
+        layer_stats = model.moe_routing_stats()
+        if not layer_stats:
+            return {}
+        metrics: dict[str, float] = {}
+        scalar_sums: dict[str, float] = {}
+        scalar_counts: dict[str, int] = {}
+        for layer_idx, stats in layer_stats:
+            prefix = f"moe/l{layer_idx}"
+            for key, val in stats.items():
+                if isinstance(val, list):
+                    for i, v in enumerate(val):
+                        metrics[f"{prefix}/{key}_{i}"] = float(v)
+                else:
+                    metrics[f"{prefix}/{key}"] = float(val)
+                    scalar_sums[key] = scalar_sums.get(key, 0.0) + float(val)
+                    scalar_counts[key] = scalar_counts.get(key, 0) + 1
+        for key, total in scalar_sums.items():
+            metrics[f"moe/{key}_mean"] = total / max(1, scalar_counts[key])
+        aux = (
+            float(model.moe_aux_loss().item())
+            if hasattr(model, "moe_aux_loss")
+            else 0.0
+        )
+        metrics["moe/aux_loss"] = aux
+        return metrics
 
     stop_training = False
     while used_tokens < cfg.training.max_train_tokens and not stop_training:
@@ -106,7 +148,9 @@ def training_run(
                     if hasattr(model, "moe_aux_loss")
                     else hidden.new_tensor(0.0, dtype=torch.float32)
                 )
-                total_loss = per_token_loss + float(cfg.moe.moe_lb_coef) * aux.to(per_token_loss.dtype)
+                total_loss = per_token_loss + float(cfg.moe.moe_lb_coef) * aux.to(
+                    per_token_loss.dtype
+                )
 
                 loss = total_loss / cfg.training.accum_steps
 
@@ -117,14 +161,19 @@ def training_run(
 
             used_tokens += int(effective)
 
-
             if step_in_accum == cfg.training.accum_steps:
                 import time
 
                 _t0 = time.time()
-                nn.utils.clip_grad_norm_(model.parameters(), max_norm=cfg.training.grad_clip_norm)
-                lr_scale = compute_lr_scale_tokens(used_tokens, cfg.training, cfg.optimizer)
-                progress_t = compute_progress_t(used_tokens, cfg.training, cfg.optimizer)
+                nn.utils.clip_grad_norm_(
+                    model.parameters(), max_norm=cfg.training.grad_clip_norm
+                )
+                lr_scale = compute_lr_scale_tokens(
+                    used_tokens, cfg.training, cfg.optimizer
+                )
+                progress_t = compute_progress_t(
+                    used_tokens, cfg.training, cfg.optimizer
+                )
                 new_lb_coef = apply_moe_schedules(model, cfg.moe, progress_t)
                 with open_dict(cfg.moe):
                     cfg.moe.moe_lb_coef = new_lb_coef
@@ -143,7 +192,11 @@ def training_run(
 
                 avg_loss = accum_loss_sum / max(1, accum_token_count)
                 stats["train_loss"].append(avg_loss)
-                current_lr = (opt_primary.param_groups[0]["lr"] if opt_primary is not None else 0.0)
+                current_lr = (
+                    opt_primary.param_groups[0]["lr"]
+                    if opt_primary is not None
+                    else 0.0
+                )
                 elapsed = max(1e-6, time.time() - _t0)
                 tps = accum_token_count / elapsed if accum_token_count > 0 else 0.0
                 flops_used = estimate_flops(
@@ -167,13 +220,21 @@ def training_run(
                     loss=avg_loss,
                     lr=current_lr,
                     throughput=tps,
-                    flops_used = flops_used
+                    flops_used=flops_used,
                 )
+                if cfg.moe.use_moe:
+                    log_moe_metrics(
+                        used_tokens=used_tokens,
+                        metrics=build_moe_metrics(model),
+                    )
 
                 if avg_loss + early_stop_min_delta < best_train_loss:
                     best_train_loss = avg_loss
                     tokens_at_best_loss = used_tokens
-                elif early_stop_tokens > 0 and (used_tokens - tokens_at_best_loss) >= early_stop_tokens:
+                elif (
+                    early_stop_tokens > 0
+                    and (used_tokens - tokens_at_best_loss) >= early_stop_tokens
+                ):
                     print(
                         f"Early stopping: no train_loss improvement for {(used_tokens - tokens_at_best_loss):,} tokens; stopping run."
                     )
@@ -188,7 +249,8 @@ def training_run(
                 eval_interval = cfg.training.eval_interval_tokens
                 max_val_batches = cfg.training.eval_max_batches
 
-                if (val_loader is not None
+                if (
+                    val_loader is not None
                     and eval_interval > 0
                     and (used_tokens - last_eval_tokens) >= eval_interval
                 ):
@@ -199,7 +261,9 @@ def training_run(
                         loss_fn,
                         max_batches=max_val_batches,
                     )
-                    print(f"[eval] tokens={used_tokens:,} val_loss={v_loss:.4f} val_ppl={v_ppl:.3f}")
+                    print(
+                        f"[eval] tokens={used_tokens:,} val_loss={v_loss:.4f} val_ppl={v_ppl:.3f}"
+                    )
                     log_eval_metrics(
                         used_tokens=used_tokens,
                         val_loss=v_loss,
@@ -207,7 +271,11 @@ def training_run(
                     )
                     last_eval_tokens = used_tokens
 
-            if cfg.logging.debug_memory and torch.cuda.is_available() and (idx % 100 == 0):
+            if (
+                cfg.logging.debug_memory
+                and torch.cuda.is_available()
+                and (idx % 100 == 0)
+            ):
                 try:
                     peak_alloc = torch.cuda.max_memory_allocated() / (1024**2)
                     peak_reserv = torch.cuda.max_memory_reserved() / (1024**2)
