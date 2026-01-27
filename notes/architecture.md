@@ -17,8 +17,7 @@ after cleanup/unification. It is meant to be a shared reference for design decis
 
 Entrypoints map to steps as follows:
 - `prepare_data.py` handles step (2) explicitly (offline prep).
-- `train.py` handles steps (1) through (4) and will also trigger step (2) implicitly
-  if tokenized/packed artifacts are missing.
+- `train.py` handles steps (1) through (4) and requires preprocessed artifacts.
 - `run_evals.py` is meant to handle step (5).
 - `generate_from_pretrained.py` handles step (6).
 

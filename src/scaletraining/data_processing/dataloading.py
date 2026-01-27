@@ -5,20 +5,27 @@ from datasets import load_from_disk
 from torch.utils.data import DataLoader
 from omegaconf import open_dict
 
-from scaletraining.data_processing.batch_packer import pack_and_save
-from scaletraining.data_processing.tokenization import tokenize_dataset
 from scaletraining.data_processing.tokenizer import TextTokenizer
 from scaletraining.util.artifacts import read_metadata
-from scaletraining.util.path_utils import get_packed_directory, get_tokenized_directory, get_cfg_subset
+from scaletraining.util.path_utils import (
+    get_packed_directory,
+    get_tokenized_directory,
+    get_cfg_subset,
+)
+
 
 def check_tokenizer_metadata_match(cfg, dataset_root, tok_dir, pk_dir):
-    meta = read_metadata(dataset_root) or read_metadata(tok_dir) or read_metadata(pk_dir)
+    meta = (
+        read_metadata(dataset_root) or read_metadata(tok_dir) or read_metadata(pk_dir)
+    )
     if meta:
         if cfg.tokenizer.strict_dataset_compat:
             current = get_cfg_subset(cfg)
             saved = meta.get("config", {})
             if any(saved.get(k) != current.get(k) for k in current.keys()):
-                raise RuntimeError(f"Dataset/tokenizer mismatch. Saved={saved} vs Current={current}")
+                raise RuntimeError(
+                    f"Dataset/tokenizer mismatch. Saved={saved} vs Current={current}"
+                )
         saved_vocab = meta.get("tokenizer_vocab_size")
         if saved_vocab is not None:
             try:
@@ -34,8 +41,10 @@ def check_tokenizer_metadata_match(cfg, dataset_root, tok_dir, pk_dir):
             except Exception:
                 pass
 
+
 def path_exists(path):
     return os.path.isdir(path)
+
 
 def get_loader_kwargs(training_cfg):
     num_workers = int(getattr(training_cfg, "loader_num_workers", 0))
@@ -44,12 +53,15 @@ def get_loader_kwargs(training_cfg):
         "pin_memory": bool(getattr(training_cfg, "loader_pin_memory", False)),
     }
     if num_workers > 0:
-        loader_kwargs["persistent_workers"] = bool(getattr(training_cfg, "loader_persistent_workers", False))
+        loader_kwargs["persistent_workers"] = bool(
+            getattr(training_cfg, "loader_persistent_workers", False)
+        )
         prefetch = getattr(training_cfg, "loader_prefetch_factor", None)
         if prefetch:
             loader_kwargs["prefetch_factor"] = int(prefetch)
     return loader_kwargs
-            
+
+
 def build_loaders(cfg, for_training: bool = True):
     """Build PyTorch DataLoaders from dataset artifacts.
 
@@ -59,32 +71,35 @@ def build_loaders(cfg, for_training: bool = True):
     reuse variable-length text without repacking.
     """
     tokenizer = TextTokenizer(cfg)
-    tok_dir = tokenizer.tokenized_directory(cfg, for_training=for_training)  # Uses fingerprint
+    tok_dir = tokenizer.tokenized_directory(
+        cfg, for_training=for_training
+    )  # Uses fingerprint
     tokenized_train_dir = os.path.join(tok_dir, "train")
-    # We dont want to tokenize for evals.
-    if not path_exists(tokenized_train_dir) and for_training:
-        tokenize_dataset(cfg, tokenizer)
-        
-    pk_dir = get_packed_directory(cfg)  # expected packed dataset location for this config
+    if not path_exists(tokenized_train_dir):
+        raise RuntimeError(
+            "Tokenized dataset not found. Run `scaletraining-prepare-data` or"
+            " `python -m scaletraining.entrypoints.prepare_data` before training/evals."
+        )
+
+    pk_dir = get_packed_directory(
+        cfg
+    )  # expected packed dataset location for this config
     if for_training:
         dataset_root = pk_dir
         packed_data_dir = os.path.join(pk_dir, "train")
-        if not path_exists(packed_data_dir) or cfg.tokenizer.do_packing:
-            pack_and_save(
-                tokenized_path=tok_dir,
-                packed_path=pk_dir,
-                block_size=cfg.model.max_seq_len,
-                num_proc=cfg.tokenizer.pack_num_proc,
-                map_batch_size=cfg.tokenizer.pack_map_batch_size,
-                writer_batch_size=cfg.tokenizer.pack_writer_batch_size,
-                metadata={"config": get_cfg_subset(cfg)}
+        if not path_exists(packed_data_dir):
+            raise RuntimeError(
+                "Packed dataset not found. Run `scaletraining-prepare-data` or"
+                " `python -m scaletraining.entrypoints.prepare_data` before training."
             )
     else:
         dataset_root = tok_dir
     # Compatibility/metadata sync with persisted artifacts.
     check_tokenizer_metadata_match(cfg, dataset_root, tok_dir, pk_dir)
 
-    train = load_from_disk(f"{dataset_root}/train").with_format("torch", columns=["input_ids"])
+    train = load_from_disk(f"{dataset_root}/train").with_format(
+        "torch", columns=["input_ids"]
+    )
     loader_kwargs = get_loader_kwargs(cfg.training)
 
     eval_bsz = getattr(cfg.training, "eval_batch_size", cfg.training.batch_size)
@@ -100,7 +115,9 @@ def build_loaders(cfg, for_training: bool = True):
 
     val_loader = None
     try:
-        val = load_from_disk(f"{dataset_root}/val").with_format("torch", columns=["input_ids"])
+        val = load_from_disk(f"{dataset_root}/val").with_format(
+            "torch", columns=["input_ids"]
+        )
         val_loader = DataLoader(
             val,
             batch_size=bsz,
