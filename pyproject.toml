@@ -11,6 +11,12 @@ requires-python = ">=3.10"
 dependencies = [
   "hydra-core>=1.3",
   "omegaconf>=2.3",
+  "torch>=2.1",
+  "transformers>=4.38",
+  "datasets>=2.18",
+  "tokenizers>=0.15",
+  "wandb>=0.16",
+  "tqdm>=4.66",
 ]
 
 [tool.setuptools]
@@ -27,3 +33,8 @@ scaletraining-train = "scaletraining.entrypoints.train:main"
 scaletraining-generate = "scaletraining.entrypoints.generate:main"
 scaletraining-pack = "scaletraining.data_processing.batch_packer:main"
 scaletraining-prepare-data = "scaletraining.entrypoints.prepare_data:main"
+
+[tool.pytest.ini_options]
+markers = [
+  "slow: long-running tests",
+]
