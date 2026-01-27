@@ -1,4 +1,5 @@
 """Path helpers for dataset artifacts."""
+
 from __future__ import annotations
 
 import hashlib
@@ -16,6 +17,7 @@ def _sanitize(value: str) -> str:
     """Translates huggingface naming schema to be os friendly"""
     return str(value).replace("/", "-").replace(" ", "_")
 
+
 def _search_for_directory_with_tag(base: str, name: str) -> str | None:
     """Return an existing directory matching a pattern with any dataset tag."""
     root = Path(base)
@@ -27,6 +29,7 @@ def _search_for_directory_with_tag(base: str, name: str) -> str | None:
     if matches:
         return str(matches[0])
     return None
+
 
 def _first_non_empty(values: Iterable[Optional[str]]) -> Optional[str]:
     for value in values:
@@ -44,19 +47,42 @@ def get_cfg_subset(cfg: DictConfig) -> Dict[str, Any]:
     subset: Dict[str, Any] = {
         "dataset_names": list(tokenizer.dataset_names),
         "dataset_tag": list(tokenizer.dataset_tag),
-        "tokenizer_name": tokenizer.tokenizer_name or tokenizer.pretrained_tokenizer_name,
+        "tokenizer_name": tokenizer.tokenizer_name
+        or tokenizer.pretrained_tokenizer_name,
         "max_seq_len": model.max_seq_len,
     }
     if tokenizer.hf_dataset_config_name is not None:
         subset["hf_dataset_config_name"] = tokenizer.hf_dataset_config_name
     return subset
 
+
+def _to_plain(obj: Any) -> Any:
+    """Recursively convert OmegaConf containers to plain Python types."""
+    from omegaconf import ListConfig, DictConfig
+
+    if isinstance(obj, (list, tuple)):
+        return [_to_plain(item) for item in obj]
+    if isinstance(obj, dict):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    if isinstance(obj, ListConfig):
+        return [_to_plain(item) for item in obj]
+    if isinstance(obj, DictConfig):
+        return {k: _to_plain(v) for k, v in obj.items()}
+    return obj
+
+
 def config_fingerprint(cfg: DictConfig) -> str:
     """Stable hash summarising dataset/tokenizer-relevant config values."""
-    payload = json.dumps(get_cfg_subset(cfg), sort_keys=True).encode("utf-8")
+    subset = get_cfg_subset(cfg)
+    # Recursively convert OmegaConf containers to plain Python types
+    serializable = _to_plain(subset)
+    payload = json.dumps(serializable, sort_keys=True).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
-def resolve_directory_from_fingerprint(cfg: DictConfig, fingerprint: str, base: str) -> str:
+
+def resolve_directory_from_fingerprint(
+    cfg: DictConfig, fingerprint: str, base: str
+) -> str:
     tokenizer = cfg.tokenizer
     model = cfg.model
 
@@ -75,6 +101,7 @@ def resolve_directory_from_fingerprint(cfg: DictConfig, fingerprint: str, base: 
 
     existing = _search_for_directory_with_tag(base, name)
     return existing or full
+
 
 def get_tokenized_directory(cfg: DictConfig, for_training: bool = True) -> str:
     """Return the path for tokenized data based on current config"""
