@@ -1,4 +1,5 @@
 """Utilities for working with HuggingFace dataset specifications."""
+
 from __future__ import annotations
 
 from typing import Any, Iterable, List, Sequence, Tuple
@@ -7,19 +8,23 @@ from omegaconf import DictConfig
 from datasets import DatasetDict, concatenate_datasets, load_dataset
 from pathlib import Path
 
+
 def _ensure_list(value: Any) -> List[Any]:
+    from omegaconf import ListConfig
+
     if value is None:
         return []
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, (list, tuple, ListConfig)):
         return list(value)
     return [value]
 
+
 def get_dataset_text_files(cfg: DictConfig) -> list[str]:
     """Get or create text files for the specified HF dataset(s).
-    
+
     Args:
         cfg: Project config containing tokenizer and path settings.
-        
+
     Returns:
         List of paths to text files for training
     """
@@ -28,7 +33,7 @@ def get_dataset_text_files(cfg: DictConfig) -> list[str]:
     if not data_dir.is_absolute():
         data_dir = Path.cwd() / data_dir
     data_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Handle single dataset or list
     dataset_specs = normalize_dataset_specs(
         names=cfg.tokenizer.dataset_names,
@@ -43,7 +48,7 @@ def get_dataset_text_files(cfg: DictConfig) -> list[str]:
         # Create a safe filename from the dataset spec
         safe_name = dataset_safe_name(dataset_path, config_name)
         text_file = data_dir / f"{safe_name}.txt"
-        
+
         if text_file.exists():
             print(f"Found existing text file: {text_file}")
             text_files.append(str(text_file))
@@ -52,13 +57,13 @@ def get_dataset_text_files(cfg: DictConfig) -> list[str]:
             try:
                 # Load the dataset
                 ds = load_hf_dataset(dataset_path, config_name)
-                
+
                 # Get the training split (or first available split)
                 split_name = "train" if "train" in ds else list(ds.keys())[0]
                 dataset = ds[split_name]
-                
+
                 # Extract text and write to file
-                with open(text_file, 'w', encoding='utf-8') as f:
+                with open(text_file, "w", encoding="utf-8") as f:
                     for example in dataset:
                         if "text" in example:
                             f.write(example["text"] + "\n")
@@ -66,22 +71,28 @@ def get_dataset_text_files(cfg: DictConfig) -> list[str]:
                             # Handle different column names
                             text_col = None
                             for col in example.keys():
-                                if isinstance(example[col], str) and len(example[col]) > 100:
+                                if (
+                                    isinstance(example[col], str)
+                                    and len(example[col]) > 100
+                                ):
                                     text_col = col
                                     break
                             if text_col:
                                 f.write(example[text_col] + "\n")
-                
+
                 print(f"Created text file: {text_file}")
                 text_files.append(str(text_file))
-                
+
             except Exception as e:
                 print(f"Error processing dataset {label}: {e}")
                 raise
-    
+
     return text_files
 
-def normalize_dataset_specs(names: Any, configs: Any | None = None) -> List[Tuple[str, str | None]]:
+
+def normalize_dataset_specs(
+    names: Any, configs: Any | None = None
+) -> List[Tuple[str, str | None]]:
     """Return a list of (dataset_path, config_name) pairs."""
 
     name_list = _ensure_list(names)
@@ -120,8 +131,8 @@ def dataset_safe_name(names: Any, configs: Any | None = None) -> str:
     names: the name of the dataset page
         example: roneneldan/TinyStories
     configs: the (optional) configuration of the split
-        example: 
-    
+        example:
+
     """
     label = dataset_label(names, configs)
     return (
@@ -133,7 +144,9 @@ def dataset_safe_name(names: Any, configs: Any | None = None) -> str:
     )
 
 
-def load_hf_dataset(names: Any, configs: Any | None = None, **kwargs: Any) -> DatasetDict:
+def load_hf_dataset(
+    names: Any, configs: Any | None = None, **kwargs: Any
+) -> DatasetDict:
     """Load one or more HuggingFace datasets, concatenating splits when necessary."""
 
     specs = normalize_dataset_specs(names, configs)

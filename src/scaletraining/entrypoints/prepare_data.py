@@ -4,6 +4,7 @@ Hydra entrypoint to fully prepare data: tokenize and pack.
 Supports a single dataset or a list of datasets in cfg.tokenizer.dataset_names.
 Each dataset is processed into its own fingerprinted directories.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,14 +16,20 @@ from omegaconf import DictConfig, OmegaConf, open_dict
 from scaletraining.data_processing.tokenization import tokenize_dataset
 from scaletraining.data_processing.tokenizer import TextTokenizer
 from scaletraining.data_processing.batch_packer import pack_and_save
-from scaletraining.util import get_packed_directory, get_tokenized_directory, write_metadata
+from scaletraining.util import (
+    get_packed_directory,
+    get_tokenized_directory,
+    write_metadata,
+)
 from scaletraining.util.path_utils import get_cfg_subset
 from scaletraining.config import load_project_config
 
 
 def _as_list(x: Any) -> list:
-    if isinstance(x, list):
-        return x
+    from omegaconf import ListConfig
+
+    if isinstance(x, (list, ListConfig)):
+        return list(x)
     if x is None:
         return []
     return [x]
@@ -40,7 +47,11 @@ def _clone_cfg(cfg: DictConfig) -> DictConfig:
     return OmegaConf.create(cfg)
 
 
-@hydra.main(version_base=None, config_path=str(Path(__file__).parent.parent.parent.parent / "conf"), config_name="config")
+@hydra.main(
+    version_base=None,
+    config_path=str(Path(__file__).parent.parent.parent.parent / "conf"),
+    config_name="config",
+)
 def main(cfg: DictConfig) -> None:
     """
     Prepare datasets by tokenizing and packing them.
