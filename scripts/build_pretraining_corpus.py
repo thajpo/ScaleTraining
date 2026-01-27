@@ -1,4 +1,5 @@
 """Thin wrapper around `build_mixed_corpus` for ad-hoc runs from the repo root."""
+
 from __future__ import annotations
 
 import argparse
@@ -16,7 +17,12 @@ from hydra import compose, initialize
 from omegaconf import open_dict
 
 from scaletraining.config import load_project_config
-from scaletraining.data_processing.corpus_builder import build_mixed_corpus
+from scaletraining.data_processing.corpus_builder import (
+    DEFAULT_SYNTH_DATASET,
+    PRESET_TARGET_TOKENS,
+    build_mixed_corpus,
+    build_sources,
+)
 
 
 def _first_non_empty(values):
@@ -28,17 +34,52 @@ def _first_non_empty(values):
 
 def build_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser("Assemble and cache a mixed pretraining corpus.")
-    parser.add_argument("--dataset-id", help="Identifier to override tokenizer.dataset_names (defaults to config).")
-    parser.add_argument("--tokenizer", help="Tokenizer name/path (defaults to config tokenizer_name).")
-    parser.add_argument("--max-seq-len", type=int, help="Packing sequence length (defaults to config max_seq_len).")
+    parser.add_argument(
+        "--preset",
+        required=True,
+        choices=sorted(PRESET_TARGET_TOKENS.keys()),
+        help="Corpus size preset (controls total token target).",
+    )
+    parser.add_argument(
+        "--corpus",
+        choices=("synth", "mix"),
+        default="synth",
+        help="Corpus type: single SYNTH dataset or curated mix (default: synth).",
+    )
+    parser.add_argument(
+        "--dataset-id", help="Override dataset id (defaults based on corpus type)."
+    )
+    parser.add_argument(
+        "--tokenizer", help="Tokenizer name/path (defaults to config tokenizer_name)."
+    )
+    parser.add_argument(
+        "--max-seq-len",
+        type=int,
+        help="Packing sequence length (defaults to config max_seq_len).",
+    )
     parser.add_argument("--output-root", type=Path, default=Path("data/pretrain/mixed"))
     parser.add_argument("--dataset-tag", help="Optional dataset_tag override.")
     parser.add_argument("--val-ratio", type=float, default=0.01)
     parser.add_argument("--num-proc", type=int, default=8)
     parser.add_argument("--seed", type=int, default=13)
-    parser.add_argument("--summaries-path", type=Path, help="Optional JSON file capturing per-source stats.")
-    parser.add_argument("--hf-token", help="Hugging Face access token for gated models/datasets.")
-    parser.add_argument("--reuse-raw", action="store_true", help="Skip re-streaming if raw jsonl exists.")
+    parser.add_argument(
+        "--summaries-path",
+        type=Path,
+        help="Optional JSON file capturing per-source stats.",
+    )
+    parser.add_argument(
+        "--hf-token", help="Hugging Face access token for gated models/datasets."
+    )
+    parser.add_argument(
+        "--reuse-raw",
+        action="store_true",
+        help="Skip re-streaming if raw jsonl exists.",
+    )
+    parser.add_argument(
+        "--include-reasoning",
+        action="store_true",
+        help="Include synthetic_reasoning in SYNTH text fields.",
+    )
     return parser
 
 
@@ -57,10 +98,7 @@ def main() -> None:
     dataset_id = args.dataset_id
     cfg_dataset = list(cfg.tokenizer.dataset_names)
     if dataset_id is None:
-        if len(cfg_dataset) == 1:
-            dataset_id = cfg_dataset[0]
-        else:
-            parser.error("Config tokenizer.dataset_names is a list; supply --dataset-id.")
+        dataset_id = DEFAULT_SYNTH_DATASET if args.corpus == "synth" else "mixed"
     if not dataset_id:
         parser.error("Unable to infer dataset id; pass --dataset-id.")
 
@@ -79,12 +117,19 @@ def main() -> None:
 
     with open_dict(cfg.tokenizer):
         cfg.tokenizer.dataset_names = [dataset_id]
-        tag_override = args.dataset_tag or _first_non_empty(cfg.tokenizer.dataset_tag) or dataset_id
+        tag_override = (
+            args.dataset_tag
+            or _first_non_empty(cfg.tokenizer.dataset_tag)
+            or dataset_id
+        )
         cfg.tokenizer.dataset_tag = [tag_override]
         cfg.tokenizer.tokenizer_name = tokenizer_name
     with open_dict(cfg.model):
         cfg.model.max_seq_len = max_seq_len
 
+    sources = build_sources(
+        args.corpus, args.preset, include_reasoning=args.include_reasoning
+    )
     tok_dir, pk_dir, summaries = build_mixed_corpus(
         cfg=cfg,
         dataset_id=dataset_id,
@@ -95,6 +140,7 @@ def main() -> None:
         num_proc=args.num_proc,
         seed=args.seed,
         reuse_raw=args.reuse_raw,
+        sources=sources,
     )
 
     if args.summaries_path:
@@ -105,6 +151,7 @@ def main() -> None:
     print(f"Tokenized shards: {tok_dir}")
     print(f"Packed shards:    {pk_dir}")
     print(f"Use tokenizer.dataset_names: {dataset_id}")
+    print(f"Preset: {args.preset} | Corpus: {args.corpus}")
 
 
 if __name__ == "__main__":

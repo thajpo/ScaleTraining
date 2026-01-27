@@ -1,9 +1,10 @@
 """Utilities for assembling mixed pretraining corpora."""
+
 from __future__ import annotations
 
 import json
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable, Iterable, Optional
 
@@ -26,6 +27,8 @@ from scaletraining.util import (
 
 
 TOKENS_PER_GB = 250_000_000
+DEFAULT_SYNTH_DATASET = "PleIAs/SYNTH"
+PRESET_TARGET_TOKENS = {"tiny": 50_000_000, "standard": 1_000_000_000}
 
 FilterFn = Callable[[dict], bool]
 CleanerFn = Callable[[str], str]
@@ -87,40 +90,86 @@ class SourceSpec:
         return _concat_fields(example, self.text_fields, self.separator)
 
 
-# Edit this list directly to control which datasets are streamed.
 SOURCES: list[SourceSpec] = [
     SourceSpec(
         dataset="HuggingFaceFW/fineweb-edu",
         subset="sample-10BT",
         text_fields=("text",),
-        target_gb=0.1,
+        target_gb=1.0,
         description="FineWeb EDU sample",
     ),
     SourceSpec(
         dataset="wikimedia/wikipedia",
         subset="20231101.en",
         text_fields=("text",),
-        target_gb=0.1,
+        target_gb=1.0,
         description="English Wikipedia",
     ),
     SourceSpec(
-        dataset="lvwerra/stack-exchange-paired",
-        split="test",
-        text_fields=("question", "response_j"),
+        dataset="openai/gsm8k",
+        subset="main",
+        split="train",
+        text_fields=("question", "answer"),
         separator="\n\n",
-        target_gb=0.1,
-        description="StackExchange (multi-domain)",
+        target_gb=0.5,
+        description="GSM8K math",
     ),
     SourceSpec(
-        dataset="gfissore/arxiv-abstracts-2021",
-        subset=None,
+        dataset="codeparrot/github-code",
+        subset="python",
         split="train",
-        text_fields=("title", "abstract"),
-        separator="\n\n",
-        target_gb=0.1,
-        description="arXiv titles + abstracts",
+        text_fields=("code",),
+        target_gb=1.0,
+        description="GitHub code (python)",
+        min_chars=40,
     ),
 ]
+
+SYNTH_SOURCES: list[SourceSpec] = [
+    SourceSpec(
+        dataset=DEFAULT_SYNTH_DATASET,
+        split="train",
+        text_fields=("query", "synthetic_answer"),
+        separator="\n\n",
+        target_gb=1.0,
+        description="PleIAs SYNTH",
+        min_chars=1,
+    )
+]
+
+
+def _scale_sources(sources: list[SourceSpec], total_tokens: int) -> list[SourceSpec]:
+    total_weight = sum(max(spec.target_gb, 0.0) for spec in sources) or 1.0
+    scaled: list[SourceSpec] = []
+    for spec in sources:
+        weight = max(spec.target_gb, 0.0) / total_weight
+        target_tokens = int(total_tokens * weight)
+        target_gb = target_tokens / float(spec.tokens_per_gb)
+        scaled.append(replace(spec, target_gb=target_gb))
+    return scaled
+
+
+def build_sources(
+    corpus: str, preset: str, include_reasoning: bool = False
+) -> list[SourceSpec]:
+    preset = preset.lower()
+    if preset not in PRESET_TARGET_TOKENS:
+        raise ValueError(
+            f"Unsupported preset '{preset}'. Choose from {sorted(PRESET_TARGET_TOKENS)}"
+        )
+    total_tokens = PRESET_TARGET_TOKENS[preset]
+
+    corpus = corpus.lower()
+    if corpus == "synth":
+        synth_fields = ("query", "synthetic_answer")
+        if include_reasoning:
+            synth_fields = ("query", "synthetic_reasoning", "synthetic_answer")
+        base = [replace(SYNTH_SOURCES[0], text_fields=synth_fields)]
+    elif corpus == "mix":
+        base = list(SOURCES)
+    else:
+        raise ValueError("Unsupported corpus. Use 'synth' or 'mix'.")
+    return _scale_sources(base, total_tokens)
 
 
 class JsonlTokenWriter:
@@ -194,7 +243,7 @@ def stream_source(
         else:
             train_writer.write(text, count)
         if progress_bar is not None:
-            progress_bar.set_postfix(tokens=f"{total_tokens/1e6:.1f}M", refresh=False)
+            progress_bar.set_postfix(tokens=f"{total_tokens / 1e6:.1f}M", refresh=False)
         if total_tokens >= target_tokens:
             break
 
@@ -208,7 +257,9 @@ def stream_source(
         "collected_tokens": total_tokens,
         "train_examples": train_writer.examples - train_before,
         "val_examples": val_writer.examples - val_before,
-        "token_count_method": "tokenizer" if spec.use_tokenizer_for_count else "estimate",
+        "token_count_method": "tokenizer"
+        if spec.use_tokenizer_for_count
+        else "estimate",
     }
 
 
@@ -221,7 +272,9 @@ def _load_tokenizer(tokenizer_name: str):
     return tokenizer, int(tokenizer.eos_token_id)
 
 
-def tokenize_and_pack(raw_dir: Path, cfg, tokenizer_name: str, max_seq_len: int, num_proc: int) -> tuple[str, str]:
+def tokenize_and_pack(
+    raw_dir: Path, cfg, tokenizer_name: str, max_seq_len: int, num_proc: int
+) -> tuple[str, str]:
     data_files = {"train": str(raw_dir / "train.jsonl")}
     val_path = raw_dir / "val.jsonl"
     if val_path.exists() and val_path.stat().st_size > 0:
@@ -263,7 +316,9 @@ def tokenize_and_pack(raw_dir: Path, cfg, tokenizer_name: str, max_seq_len: int,
             desc="Tokenizing val",
         ).save_to_disk(str(tok_dir / "val"))
 
-    write_metadata(str(tok_dir), {"config": get_cfg_subset(cfg), "tokenizer_name": tokenizer_name})
+    write_metadata(
+        str(tok_dir), {"config": get_cfg_subset(cfg), "tokenizer_name": tokenizer_name}
+    )
 
     pack_and_save(
         tokenized_path=str(tok_dir),
@@ -288,6 +343,7 @@ def build_mixed_corpus(
     num_proc: int,
     seed: int,
     reuse_raw: bool,
+    sources: Optional[list[SourceSpec]] = None,
 ) -> tuple[str, str, list[dict]]:
     raw_dir = output_root / dataset_id / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
@@ -305,8 +361,11 @@ def build_mixed_corpus(
         train_writer = JsonlTokenWriter(raw_dir / "train.jsonl")
         val_writer = JsonlTokenWriter(raw_dir / "val.jsonl")
 
-        for spec in SOURCES:
-            print(f"Streaming {spec.description or spec.dataset} -> ~{spec.target_tokens():,} tokens")
+        sources = sources or SOURCES
+        for spec in sources:
+            print(
+                f"Streaming {spec.description or spec.dataset} -> ~{spec.target_tokens():,} tokens"
+            )
             summary = stream_source(
                 spec,
                 tokenizer,
@@ -352,5 +411,9 @@ __all__ = [
     "SourceSpec",
     "TOKENS_PER_GB",
     "SOURCES",
+    "SYNTH_SOURCES",
+    "DEFAULT_SYNTH_DATASET",
+    "PRESET_TARGET_TOKENS",
+    "build_sources",
     "build_mixed_corpus",
 ]
