@@ -6,7 +6,11 @@ from omegaconf import DictConfig
 import hydra
 from pathlib import Path
 from scaletraining.config import load_project_config
-from scaletraining.data_processing.dataset_utils import dataset_safe_name, get_dataset_text_files
+from scaletraining.data_processing.dataset_utils import (
+    dataset_safe_name,
+    get_dataset_text_files,
+)
+
 
 def train_tokenizer_from_cfg(cfg: DictConfig) -> str:
     """Train a dataset-specific tokenizer in-process and return its save path.
@@ -20,10 +24,11 @@ def train_tokenizer_from_cfg(cfg: DictConfig) -> str:
     # Create tokenizer
     tokenizer = Tokenizer(BPE(unk_token="[UNK]"))
     trainer = BpeTrainer(
-        vocab_size=cfg.tokenizer.tokenizer_vocab_size,
+        vocab_size=cfg.tokenizer.custom_tokenizer_vocab_size,
         show_progress=True,
         max_token_length=10,
-        special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"])
+        special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"],
+    )
     tokenizer.pre_tokenizer = Whitespace()
 
     print(f"Training tokenizer on {len(files)} file(s): {files}")
@@ -31,8 +36,7 @@ def train_tokenizer_from_cfg(cfg: DictConfig) -> str:
 
     # Generate dataset-based save path
     dataset_name = dataset_safe_name(
-       names=cfg.tokenizer.dataset_names,
-       configs=cfg.tokenizer.dataset_tag 
+        names=cfg.tokenizer.dataset_names, configs=cfg.tokenizer.dataset_tag
     )
     # Save under project-local tokenizers/
     out_dir = Path.cwd() / "tokenizers"
@@ -44,11 +48,13 @@ def train_tokenizer_from_cfg(cfg: DictConfig) -> str:
     print(f"Tokenizer saved to: {save_path}")
     return str(save_path)
 
-@hydra.main(version_base=None, config_path='../../../conf', config_name='config')
+
+@hydra.main(version_base=None, config_path="../../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     """Hydra console script entrypoint for tokenization."""
     cfg = load_project_config(cfg)
     train_tokenizer_from_cfg(cfg)
+
 
 if __name__ == "__main__":
     main()
