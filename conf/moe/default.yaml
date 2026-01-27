@@ -6,7 +6,7 @@ moe_top_k: 2
 moe_n_hidden: 1024
 moe_activation: "swiGLU"
 moe_use_shared: false
-moe_n_layers: ${n_layer}
+moe_n_layers: ${model.n_layer}
 
 moe_router_noise: 0.005
 moe_router_temp: 1.0

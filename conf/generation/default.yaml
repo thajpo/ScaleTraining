@@ -1,7 +1,7 @@
 # Defaults for sampling and optional post-training generation
 
 prompt: "There was a star ship in the sky and "
-model_path: "outputs/v=004acfd1__20250917T111645Z/model.pt"
+model_path: "latest"
 generation_max_tokens: 1000
 generation_temperature: 1.0
 generation_top_k: 50
