@@ -10,8 +10,6 @@ from typing import Any, Dict, Iterable, Optional
 
 from omegaconf import DictConfig
 
-from scaletraining.data_processing.dataset_utils import dataset_label
-
 
 def _sanitize(value: str) -> str:
     """Translates huggingface naming schema to be os friendly"""
@@ -83,6 +81,8 @@ def config_fingerprint(cfg: DictConfig) -> str:
 def resolve_directory_from_fingerprint(
     cfg: DictConfig, fingerprint: str, base: str
 ) -> str:
+    from scaletraining.data_processing.dataset_utils import dataset_label
+    
     tokenizer = cfg.tokenizer
     model = cfg.model
 

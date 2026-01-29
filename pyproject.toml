@@ -17,6 +17,8 @@ dependencies = [
   "tokenizers>=0.15",
   "wandb>=0.16",
   "tqdm>=4.66",
+  "numpy<2",
+  "lm-eval>=0.4",
 ]
 
 [tool.setuptools]
@@ -38,3 +40,13 @@ scaletraining-prepare-data = "scaletraining.entrypoints.prepare_data:main"
 markers = [
   "slow: long-running tests",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+extra-index-url = ["https://download.pytorch.org/whl/rocm6.2.4"]
+

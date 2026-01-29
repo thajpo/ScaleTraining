@@ -106,8 +106,11 @@ def main(cfg: DictConfig) -> float:
     except Exception as exc:  # pragma: no cover - W&B logging is best-effort
         LOGGER.warning("Failed to log model size to W&B: %s", exc)
 
-    # Compile model for massive speedups
-    model = torch.compile(model, mode="max-autotune")
+    # Compile model for massive speedups (skip on ROCm due to triton compat issues)
+    if torch.version.hip is None:
+        model = torch.compile(model, mode="max-autotune")
+    else:
+        LOGGER.info("Skipping torch.compile on ROCm (triton compatibility)")
     loss_fn = nn.CrossEntropyLoss(reduction='sum')  # summed CE, normalized per token in loop
 
     # Sanity check embedding size vs vocab size after metadata auto-set
