@@ -106,11 +106,19 @@ def main(cfg: DictConfig) -> float:
     except Exception as exc:  # pragma: no cover - W&B logging is best-effort
         LOGGER.warning("Failed to log model size to W&B: %s", exc)
 
-    # Compile model for massive speedups (skip on ROCm due to triton compat issues)
-    if torch.version.hip is None:
+    # Compile model for massive speedups
+    # ROCm Triton support improved in PyTorch 2.8+, so enable compile there too
+    def _should_compile():
+        if torch.version.hip is None:
+            return True  # CUDA - always compile
+        # ROCm: check version (2.8+ has better Triton support)
+        major, minor = map(int, torch.__version__.split(".")[:2])
+        return (major, minor) >= (2, 8)
+    
+    if _should_compile():
         model = torch.compile(model, mode="max-autotune")
     else:
-        LOGGER.info("Skipping torch.compile on ROCm (triton compatibility)")
+        LOGGER.info("Skipping torch.compile on ROCm<2.8 (triton compatibility)")
     loss_fn = nn.CrossEntropyLoss(reduction='sum')  # summed CE, normalized per token in loop
 
     # Sanity check embedding size vs vocab size after metadata auto-set

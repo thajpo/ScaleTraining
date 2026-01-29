@@ -126,6 +126,27 @@ def save_model(model: torch.nn.Module, cfg: Any, out_root: Optional[str] = None)
     state = base_mod.state_dict()
     torch.save({"state_dict": state}, model_path)
 
+    # Save model config for easy checkpoint loading without manual overrides
+    model_cfg = cfg.model
+    model_config = {
+        "n_layer": int(model_cfg.n_layer),
+        "n_head": int(model_cfg.n_head),
+        "n_embed": int(model_cfg.n_embed),
+        "n_hidden": int(model_cfg.n_hidden),
+        "max_seq_len": int(model_cfg.max_seq_len),
+        "vocab_size": int(model_cfg.vocab_size),
+        "bias": bool(model_cfg.bias),
+        "UE_bias": bool(model_cfg.UE_bias),
+        "activation": str(getattr(model_cfg, "activation", "relu")),
+        "attn_dropout": float(model_cfg.attn_dropout),
+        "resid_dropout": float(model_cfg.resid_dropout),
+        "use_rope": bool(getattr(model_cfg, "use_rope", True)),
+        "use_checkpoint": bool(model_cfg.use_checkpoint),
+    }
+    model_config_path = os.path.join(run_dir, "model_config.json")
+    with open(model_config_path, "w", encoding="utf-8") as f:
+        json.dump(model_config, f, indent=2, sort_keys=True)
+
     save_run_manifest(cfg, run_dir)
     return run_dir
 

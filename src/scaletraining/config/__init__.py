@@ -160,6 +160,11 @@ class TrainingConfig:
 
 
 @dataclass
+class EvalConfig:
+    tasks: str = field(default="hellaswag")
+
+
+@dataclass
 class ProjectConfig:
     device: DeviceConfig = field(default=MISSING)
     training: TrainingConfig = field(default=MISSING)
@@ -170,6 +175,7 @@ class ProjectConfig:
     generation: GenerationConfig = field(default=MISSING)
     paths: PathsConfig = field(default=MISSING)
     moe: MoeConfig = field(default=MISSING)
+    eval: EvalConfig = field(default_factory=EvalConfig)
     sweep: SweepConfig = field(default=MISSING)
     device_resolved: Optional[str] = field(default=None)
 
@@ -193,6 +199,7 @@ __all__ = [
     "GenerationConfig",
     "PathsConfig",
     "MoeConfig",
+    "EvalConfig",
     "DeviceConfig",
     "load_project_config",
 ]

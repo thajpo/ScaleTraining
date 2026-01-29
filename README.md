@@ -16,6 +16,9 @@ python -m scaletraining.entrypoints.run_evals
 
 # 4. Generate from checkpoint
 python -m scaletraining.entrypoints.generate_from_pretrained
+
+# 5. Run standardized benchmarks (hellaswag, mmlu, arc_easy, etc.)
+LM_EVAL_TASKS=hellaswag python -m scaletraining.entrypoints.run_lm_eval
 ```
 
 **Note:** Training and evaluation now fail fast if preprocessed artifacts are missing. Run `prepare_data.py` first.
@@ -60,6 +63,7 @@ python -m scaletraining.entrypoints.train model.n_layer=8 training.batch_size=32
 - **`train.py`**: Train until token budget, with validation evals.
 - **`run_evals.py`**: Compute validation perplexity on a checkpoint.
 - **`generate_from_pretrained.py`**: Interactive generation from a trained model.
+- **`run_lm_eval.py`**: Run standardized benchmarks via lm-evaluation-harness. Set `LM_EVAL_TASKS` env var.
 
 ## Key Concepts
 

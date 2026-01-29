@@ -176,7 +176,62 @@ class ScaleTrainingLM(LM):
         raise NotImplementedError("Rolling loglikelihood not implemented yet.")
 
     def generate_until(self, requests):
-        raise NotImplementedError("Generation not implemented for this eval wrapper yet.")
+        """
+        Generate text until a stop condition is met.
+        
+        Each Instance has .args = (context, gen_kwargs)
+        gen_kwargs contains 'until' (stop strings) and optionally 'max_gen_toks'
+        Return: list of generated strings
+        """
+        results = []
+        
+        for req in tqdm(requests, desc="Generating"):
+            context, gen_kwargs = req.args
+            stop_sequences = gen_kwargs.get("until", [])
+            max_gen_toks = gen_kwargs.get("max_gen_toks", self.max_gen_toks)
+            
+            # Encode context
+            input_ids = self.tok_encode(context)
+            input_ids = torch.tensor([input_ids], dtype=torch.long, device=self.device)
+            
+            # Autoregressive generation
+            generated_ids = []
+            for _ in range(max_gen_toks):
+                with torch.no_grad():
+                    logits = self._model(input_ids)
+                    next_token_logits = logits[:, -1, :]
+                    next_token = next_token_logits.argmax(dim=-1)
+                    
+                generated_ids.append(next_token.item())
+                input_ids = torch.cat([input_ids, next_token.unsqueeze(0)], dim=1)
+                
+                # Check stop conditions
+                generated_text = self.tok_decode(generated_ids)
+                should_stop = False
+                for stop_seq in stop_sequences:
+                    if stop_seq in generated_text:
+                        # Truncate at stop sequence
+                        generated_text = generated_text.split(stop_seq)[0]
+                        should_stop = True
+                        break
+                
+                # Also stop on EOS token
+                if hasattr(self._tokenizer, 'eos_token_id') and next_token.item() == self._tokenizer.eos_token_id:
+                    should_stop = True
+                    
+                if should_stop:
+                    break
+            
+            generated_text = self.tok_decode(generated_ids)
+            # Final truncation at stop sequences
+            for stop_seq in stop_sequences:
+                if stop_seq in generated_text:
+                    generated_text = generated_text.split(stop_seq)[0]
+                    break
+                    
+            results.append(generated_text)
+        
+        return results
 
 
 @hydra.main(version_base=None, config_path=str(Path(__file__).parent.parent.parent.parent / "conf"), config_name="config")
@@ -197,14 +252,18 @@ def main(cfg: DictConfig):
         batch_size=cfg.training.batch_size  # Reuse training batch size
     )
     
-    # 3. Parse tasks from environment variable (to avoid Hydra arg conflicts)
+    # 3. Parse tasks: env var > config > default
     # Usage: LM_EVAL_TASKS=hellaswag,mmlu python -m scaletraining.entrypoints.run_lm_eval ...
+    # Or:    python -m scaletraining.entrypoints.run_lm_eval eval.tasks=hellaswag,mmlu ...
     import os
     tasks_str = os.environ.get("LM_EVAL_TASKS", "")
+    if not tasks_str:
+        # Fall back to config
+        tasks_str = getattr(cfg.eval, "tasks", "") if hasattr(cfg, "eval") else ""
     tasks_list = [t.strip() for t in tasks_str.split(",") if t.strip()]
         
     if not tasks_list:
-        print("No tasks specified via LM_EVAL_TASKS env var. Defaulting to 'hellaswag'.")
+        print("No tasks specified. Defaulting to 'hellaswag'.")
         tasks_list = ["hellaswag"]
 
     print(f"Evaluating on tasks: {tasks_list}")
