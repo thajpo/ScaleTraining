@@ -1,12 +1,12 @@
 {
   "accum_steps": 3,
-  "batch_size": 24,
-  "final_train_loss": 5.589110122197797,
+  "batch_size": 4,
+  "final_train_loss": 19.91073700333822,
   "lr": 0.02,
   "max_seq_len": 2048,
   "n_embed": 512,
   "n_head": 8,
-  "n_layer": 5,
+  "n_layer": 6,
   "primary_optimizer": "muon",
   "use_rope": true
 }
