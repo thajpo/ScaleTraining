@@ -21,6 +21,8 @@ python -m scaletraining.entrypoints.generate_from_pretrained
 LM_EVAL_TASKS=hellaswag python -m scaletraining.entrypoints.run_lm_eval
 ```
 
+LEAN_FLOW_QUESTION_DRILL: explicit
+
 **Note:** Training and evaluation now fail fast if preprocessed artifacts are missing. Run `prepare_data.py` first.
 
 ## Advanced: Mixed Corpus Builder
