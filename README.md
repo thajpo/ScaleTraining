@@ -12,6 +12,12 @@ ScaleTraining is a single-GPU language-model training harness for dense and Mixt
 - Checkpoint loading for validation perplexity, generation, and lm-evaluation-harness benchmarks.
 - CPU-safe tests and CI checks for config loading, public entrypoints, model contracts, and optimizer smoke coverage.
 
+## Reviewer Entry Points
+
+- [docs/architecture.md](docs/architecture.md): reviewer-facing architecture and engineering claims.
+- [docs/reviewer-demo.md](docs/reviewer-demo.md): non-heavy commands to inspect the package and tests.
+- [notes/architecture.md](notes/architecture.md): deeper internal design notes and cleanup plan.
+
 ## Quick Verification
 
 These commands do not train a model or require a GPU.
