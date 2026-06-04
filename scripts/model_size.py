@@ -15,6 +15,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from hydra import compose, initialize_config_dir
+from omegaconf import open_dict
 
 from scaletraining.config import load_project_config
 from scaletraining.model import TransformerNetwork
@@ -69,6 +70,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     cfg = load_cfg(args.config_path, args.config_name, args.override)
     cfg = load_project_config(cfg)
+    if getattr(cfg.model, "vocab_size", None) is None:
+        with open_dict(cfg.model):
+            cfg.model.vocab_size = 49152
     model = TransformerNetwork(cfg)
 
     total_params, trainable_params = count_parameters(model)

@@ -1,0 +1,17 @@
+## Tiny architecture for CPU smoke tests and debugging.
+
+n_layer: 2
+max_seq_len: 64
+n_head: 2
+n_embed: 64
+n_hidden: 256
+bias: true
+UE_bias: false
+activation: relu
+attn_dropout: 0.0
+resid_dropout: 0.0
+use_checkpoint: false
+use_rope: true
+rope_config:
+  theta: 10000.0
+  use_complex: true

@@ -1,0 +1,23 @@
+## Small runtime profile for smoke runs.
+
+batch_size: 2
+accum_steps: 1
+grad_clip_norm: 1.0
+max_train_tokens: 4096
+max_val_tokens: 4096
+logits_chunk_size: 0
+
+# Early stopping
+early_stop_tokens_without_improvement: 0
+early_stop_min_delta: 0.0
+
+# Evaluation cadence
+eval_interval_tokens: 0
+eval_max_batches: 2
+eval_batch_size: 1
+
+# Keep CPU smoke runs lightweight.
+loader_num_workers: 0
+loader_pin_memory: false
+loader_persistent_workers: false
+loader_prefetch_factor: 0

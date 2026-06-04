@@ -164,25 +164,25 @@ class MLPBlock(nn.Module):
         self.activation = _mlp_activation(getattr(model_cfg, "activation", "relu"))
 
     def forward(self, x):
-        residual = x
         # x -> (B T E)
         x = self.Wh(x)
         x = self.activation(x)
         x = self.We(x)
         x = self.dropout(x)
-        return x + residual
+        return x
 
 
 class TransformerBlock(nn.Module):
     def __init__(self, model_cfg):
         super().__init__()
-        self.ln = nn.LayerNorm(model_cfg.n_embed)
+        self.ln1 = nn.LayerNorm(model_cfg.n_embed)
+        self.ln2 = nn.LayerNorm(model_cfg.n_embed)
         self.attention = AttentionBlock(model_cfg)
         self.mlp = MLPBlock(model_cfg)
 
     def forward(self, x):
-        x = x + self.attention(self.ln(x))
-        x = x + self.mlp(self.ln(x))
+        x = x + self.attention(self.ln1(x))
+        x = x + self.mlp(self.ln2(x))
         return x
 
 
@@ -360,13 +360,14 @@ class MoELayer(nn.Module):
 class MoEBlock(nn.Module):
     def __init__(self, model_cfg, moe_cfg):
         super().__init__()
-        self.ln = nn.LayerNorm(model_cfg.n_embed)
+        self.ln1 = nn.LayerNorm(model_cfg.n_embed)
+        self.ln2 = nn.LayerNorm(model_cfg.n_embed)
         self.attention = AttentionBlock(model_cfg)
         self.moe = MoELayer(model_cfg, moe_cfg)
 
     def forward(self, x):
-        x = x + self.attention(self.ln(x))
-        x = x + self.moe(self.ln(x))
+        x = x + self.attention(self.ln1(x))
+        x = x + self.moe(self.ln2(x))
         return x
 
 
@@ -388,7 +389,18 @@ class TransformerNetwork(nn.Module):
         self.W_ue.weight = self.token_embedding.weight
 
         if moe_cfg.use_moe:
-            blocks = [MoEBlock(model_cfg, moe_cfg) for _ in range(model_cfg.n_layer)]
+            n_moe_layers = int(getattr(moe_cfg, "moe_n_layers", model_cfg.n_layer))
+            if not 0 <= n_moe_layers <= model_cfg.n_layer:
+                raise ValueError(
+                    f"moe.moe_n_layers must be between 0 and model.n_layer; got {n_moe_layers}"
+                )
+            dense_layers = model_cfg.n_layer - n_moe_layers
+            blocks = [
+                TransformerBlock(model_cfg)
+                if idx < dense_layers
+                else MoEBlock(model_cfg, moe_cfg)
+                for idx in range(model_cfg.n_layer)
+            ]
         else:
             blocks = [TransformerBlock(model_cfg) for _ in range(model_cfg.n_layer)]
 

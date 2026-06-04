@@ -7,14 +7,13 @@ Usage:
 """
 
 import logging
-from typing import List, Tuple, Optional, Union
 from pathlib import Path
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
 import hydra
-from omegaconf import DictConfig, open_dict
+from omegaconf import DictConfig
 from lm_eval import simple_evaluate
 from lm_eval.api.model import LM
 
@@ -73,6 +72,13 @@ class ScaleTrainingLM(LM):
              return self._tokenizer.tokenizer.decode(tokens)
         return ""
 
+    def _prefix_token_id(self):
+        for attr in ("eos_token_id", "bos_token_id", "pad_token_id"):
+            token_id = getattr(self._tokenizer, attr, None)
+            if token_id is not None:
+                return int(token_id)
+        return 0
+
     def loglikelihood(self, requests):
         """
         Compute log-likelihood of a list of Instance objects.
@@ -96,11 +102,17 @@ class ScaleTrainingLM(LM):
                 
                 # 1. Encode context and continuation
                 # Note: We concatenate them to get P(continuation | context)
-                ctx_enc = self.tok_encode(context)
+                ctx_enc = self.tok_encode(context) or [self._prefix_token_id()]
                 cont_enc = self.tok_encode(continuation)
                 
                 # Setup full sequence
                 full_enc = ctx_enc + cont_enc
+                if len(full_enc) > self.max_length:
+                    overflow = len(full_enc) - self.max_length
+                    ctx_enc = ctx_enc[overflow:] if overflow < len(ctx_enc) else []
+                    if not ctx_enc:
+                        ctx_enc = [self._prefix_token_id()]
+                    full_enc = ctx_enc + cont_enc
                 
                 inputs.append(torch.tensor(full_enc, dtype=torch.long))
                 ctx_lens.append(len(ctx_enc))
@@ -173,7 +185,41 @@ class ScaleTrainingLM(LM):
         return results
 
     def loglikelihood_rolling(self, requests):
-        raise NotImplementedError("Rolling loglikelihood not implemented yet.")
+        """
+        Compute rolling log-likelihood for unconditional perplexity tasks.
+
+        lm-eval passes Instance objects with .args = (text,). We score each text
+        in fixed windows, using the first token in each window only as context
+        and summing logprobs for the remaining tokens.
+        """
+        results = []
+        window = max(2, int(self.max_length))
+
+        for req in tqdm(requests, desc="Rolling eval"):
+            (text,) = req.args
+            token_ids = self.tok_encode(text)
+            if len(token_ids) < 2:
+                results.append(0.0)
+                continue
+
+            total = 0.0
+            for start in range(0, len(token_ids) - 1, window - 1):
+                chunk = token_ids[start : start + window]
+                if len(chunk) < 2:
+                    continue
+                input_ids = torch.tensor([chunk], dtype=torch.long, device=self.device)
+                with torch.no_grad():
+                    logits = F.log_softmax(self._model(input_ids), dim=-1)
+                targets = input_ids[:, 1:]
+                token_logprobs = torch.gather(
+                    logits[:, :-1, :],
+                    2,
+                    targets.unsqueeze(-1),
+                ).squeeze(-1)
+                total += float(token_logprobs.sum().item())
+            results.append(total)
+
+        return results
 
     def generate_until(self, requests):
         """

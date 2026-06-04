@@ -37,6 +37,7 @@ scaletraining-pack = "scaletraining.data_processing.batch_packer:main"
 scaletraining-prepare-data = "scaletraining.entrypoints.prepare_data:main"
 
 [tool.pytest.ini_options]
+addopts = "-m 'not slow'"
 markers = [
   "slow: long-running tests",
 ]
@@ -49,4 +50,3 @@ dev = [
 [tool.uv]
 index-url = "https://pypi.org/simple"
 extra-index-url = ["https://download.pytorch.org/whl/rocm6.2.4"]
-

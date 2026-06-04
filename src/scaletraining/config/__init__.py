@@ -175,8 +175,8 @@ class ProjectConfig:
     generation: GenerationConfig = field(default=MISSING)
     paths: PathsConfig = field(default=MISSING)
     moe: MoeConfig = field(default=MISSING)
+    sweep: Optional[SweepConfig] = field(default=None)
     eval: EvalConfig = field(default_factory=EvalConfig)
-    sweep: SweepConfig = field(default=MISSING)
     device_resolved: Optional[str] = field(default=None)
 
 

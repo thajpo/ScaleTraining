@@ -1,0 +1,6 @@
+# CPU-only profile for smoke tests and local validation.
+
+device: cpu
+use_flash_sdp: false
+use_mem_efficient_sdp: false
+use_math_sdp: true
