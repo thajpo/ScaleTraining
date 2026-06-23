@@ -20,7 +20,8 @@ Hydra config
    -> optional MoE blocks
 -> token-budget training loop
 -> W&B/run manifests/checkpoints
--> perplexity and lm-eval style evaluation
+-> perplexity and lm-eval style evaluation artifacts
+-> run report evidence bundle
 -> qualitative generation from checkpoint
 ```
 
@@ -46,6 +47,7 @@ Hydra config
   tokenization/packing.
 - Dense and MoE models share the same training surface.
 - Evaluation and generation are separated from training for reproducibility.
+- Evaluation sidecars and run reports preserve metrics next to checkpoints.
 - The repo has tests for package entrypoints, data processing, model behavior,
   optimizer behavior, and training-loop utilities.
 

@@ -1,6 +1,7 @@
 """Utility helpers shared across the training/evaluation loops."""
 from __future__ import annotations
 
+import random
 from typing import Any, Dict, Iterable, List, Tuple
 
 import math
@@ -12,6 +13,21 @@ from scaletraining.model.optimizers import AdaMuon, Muon
 
 
 ParameterSplit = Tuple[List[nn.Parameter], List[nn.Parameter]]
+
+
+def set_random_seed(seed: int) -> None:
+    """Set core runtime seeds for controlled single-run comparisons."""
+
+    random.seed(seed)
+    try:
+        import numpy as np
+
+        np.random.seed(seed)
+    except Exception:
+        pass
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 def split_model_matrix_params(

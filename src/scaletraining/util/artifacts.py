@@ -56,6 +56,7 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
             "eps": optimizer_cfg.eps,
         },
         "training": {
+            "seed": training_cfg.seed,
             "batch_size": training_cfg.batch_size,
             "accum_steps": training_cfg.accum_steps,
             "effective_batch_size": training_cfg.batch_size * training_cfg.accum_steps,

@@ -7,21 +7,19 @@ This demo path proves the software surface without running a long training job.
 Install dependencies:
 
 ```bash
-pip install -e .
-pip install pytest ruff
+uv sync
 ```
 
 Run fast tests:
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
 
 Run lint or at least syntax compilation:
 
 ```bash
-ruff check .
-python -m compileall -q src tests scripts
+uv run python -m compileall -q src tests scripts
 ```
 
 ## Inspect The Training Workflow
@@ -29,16 +27,22 @@ python -m compileall -q src tests scripts
 Show the happy path without executing a long run:
 
 ```bash
-python -m scaletraining.entrypoints.prepare_data --help
-python -m scaletraining.entrypoints.train --help
-python -m scaletraining.entrypoints.run_evals --help
-python -m scaletraining.entrypoints.generate_from_pretrained --help
+uv run python -m scaletraining.entrypoints.prepare_data --help
+uv run python -m scaletraining.entrypoints.train --help
+uv run python -m scaletraining.entrypoints.run_evals --help
+uv run python -m scaletraining.entrypoints.generate_from_pretrained --help
 ```
 
 Inspect model size for a config:
 
 ```bash
-python scripts/model_size.py
+uv run python scripts/model_size.py
+```
+
+Inspect a completed run evidence bundle:
+
+```bash
+uv run python scripts/run_report.py --run-dir outputs/<run>
 ```
 
 ## Heavier Work To Skip In A Review
@@ -55,3 +59,4 @@ python scripts/model_size.py
 - Explicit preprocessing and artifact fingerprinting.
 - A shared training surface for dense and MoE models.
 - Testable entrypoints and model/data-processing contracts.
+- Reproducible eval sidecars and reviewer-readable run reports.

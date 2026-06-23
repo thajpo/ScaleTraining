@@ -19,7 +19,10 @@ from lm_eval.api.model import LM
 
 from scaletraining.config import load_project_config
 from scaletraining.util import resolve_device
-from scaletraining.util.eval_utils import load_pretrained_model_and_tokenizer
+from scaletraining.util.eval_utils import (
+    load_pretrained_model_and_tokenizer,
+    write_lm_eval_result,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -325,6 +328,9 @@ def main(cfg: DictConfig):
     # 5. Print Results
     from lm_eval.utils import make_table
     print(make_table(results))
+    if bool(getattr(cfg.eval, "write_results", True)):
+        result_path = write_lm_eval_result(cfg, tasks_list, results)
+        print(f"lm-eval results written to: {result_path}")
 
 if __name__ == "__main__":
     main()

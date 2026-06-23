@@ -35,41 +35,67 @@
 - [Eval] Strengthen eval harness (Wikitext PPL + one MC benchmark).
 - [Testing] Add missing model/training-loop regression tests.
 
-## Specd
+## Completed
 ### [Dense+MoE] Fix FFN residual wiring and split sublayer LayerNorms
-- status: `ready`
+- status: `completed`
+- outcome:
+  - `MLPBlock.forward` no longer applies an internal residual.
+  - `TransformerBlock` and `MoEBlock` use separate `ln1` / `ln2` pre-norm sublayers.
+  - Regression coverage exists in `tests/model/test_model.py`.
+
+## Specd
+### [Infra] Persist reproducible eval and run evidence artifacts
+- status: `review`
 - behavior change:
-  - Remove internal residual addition from `MLPBlock.forward`; residual is applied once at block level.
-  - Split shared block norm into `ln1` and `ln2` in both `TransformerBlock` and `MoEBlock`.
-  - Keep pre-norm residual structure: `x + attention(ln1(x))` and `x + ffn_or_moe(ln2(x))`.
+  - Keep `evaluate_perplexity(...) -> (loss, perplexity)` compatible while adding a richer stats helper for artifact writing.
+  - `run_evals.py` writes `eval_results.json` next to the resolved checkpoint by default.
+  - `run_lm_eval.py` writes `lm_eval_results.json` next to the resolved checkpoint by default.
+  - `train.py` keeps writing root `result.json` and also writes `train_result.json` into the checkpoint run directory.
+  - `scripts/run_report.py --run-dir outputs/<run>` combines manifest, train, eval, and lm-eval artifacts into `run_report.json` and `run_report.md`.
+  - `training.seed` controls Torch/runtime seeding and the shuffled training DataLoader generator.
 - files to touch:
-  - `src/scaletraining/model/model.py`
-  - `tests/model/test_model.py`
+  - `src/scaletraining/util/eval_utils.py`
+  - `src/scaletraining/entrypoints/run_evals.py`
+  - `src/scaletraining/entrypoints/run_lm_eval.py`
+  - `src/scaletraining/entrypoints/train.py`
+  - `src/scaletraining/data_processing/dataloading.py`
+  - `src/scaletraining/config/__init__.py`
+  - `conf/training/default.yaml`
+  - `conf/training/smoke.yaml`
+  - `conf/eval/default.yaml`
+  - `scripts/run_report.py`
+  - docs and focused tests
 - fail-first tests:
-  - Add a unit test where `MLPBlock` projections are zeroed and dropout disabled; expected output is all zeros (fails on current residual-inside-MLP behavior).
-  - Add a unit test asserting `TransformerBlock` and `MoEBlock` expose `ln1` and `ln2`.
-  - Add a forward/backward finite smoke test for both dense and MoE block paths.
+  - Unit test artifact writing with a temp checkpoint path and no real model checkpoint.
+  - Unit test config schema accepts `eval.write_results`, `eval.output_dir`, and `training.seed`.
+  - Unit test `evaluate_perplexity` still returns the existing two-value tuple.
+  - Unit test `scripts/run_report.py` handles complete and partial run directories.
 - non-goals:
-  - No `moe_n_layers` policy changes.
-  - No router/gating/capacity behavior changes.
-  - No checkpoint key remap or compatibility shim for old checkpoints.
+  - No expensive training or live lm-eval benchmark run.
+  - No new model architecture features.
+  - No checkpoint format migration.
 - risks:
-  - Training dynamics will shift due to corrected residual math and norm placement.
-  - Existing checkpoints trained with prior wiring are intentionally unsupported (fail-fast policy).
+  - Eval result JSON must remain valid when metrics are non-finite.
+  - Sidecar artifact paths should not surprise users who override checkpoint paths.
+  - Seed support improves controlled comparisons but does not guarantee full GPU determinism.
 - touch points (path + function/class/block):
-  - `src/scaletraining/model/model.py` -> `MLPBlock.forward`
-  - `src/scaletraining/model/model.py` -> `TransformerBlock.__init__` / `TransformerBlock.forward`
-  - `src/scaletraining/model/model.py` -> `MoEBlock.__init__` / `MoEBlock.forward`
-  - `tests/model/test_model.py` -> new block-structure and residual-behavior tests
+  - `src/scaletraining/util/eval_utils.py` -> eval stats/result builders and writers
+  - `src/scaletraining/entrypoints/run_evals.py` -> validation result persistence
+  - `src/scaletraining/entrypoints/run_lm_eval.py` -> benchmark result persistence
+  - `src/scaletraining/entrypoints/train.py` -> run-local train result sidecar
+  - `src/scaletraining/data_processing/dataloading.py` -> seeded shuffle generator
 - line anchors (optional):
-  - `src/scaletraining/model/model.py`: around `MLPBlock`, `TransformerBlock`, `MoEBlock`
+  - n/a
 - expected diff shape:
-  - Modify 2 files.
-  - Roughly +60 to +140 LOC (mostly new tests, small model edits).
+  - Add one reporting script and one repo agent guide.
+  - Modify eval/train/config/data loading/docs/tests.
+  - Roughly +350 to +550 LOC including tests and docs.
 - review checks:
-  - `pytest tests/model/test_model.py`
-  - Forward/backward finite checks pass for dense and MoE block smoke tests.
-  - No unrelated architecture or routing logic changes in diff.
+  - `uv run pytest -q tests/config/test_config.py tests/util/test_eval_utils.py tests/test_run_report.py`
+  - `uv run python -m compileall -q src scripts tests`
+  - `uv run pytest -q`
+  - `uv run python -m scaletraining.entrypoints.run_evals --help`
+  - `uv run python scripts/run_plan.py --model-size tiny --token-budget 4096 -o device=cpu -o training=smoke`
 
 Required contract for each `Specd` item:
 - behavior change

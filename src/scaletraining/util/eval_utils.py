@@ -1,5 +1,10 @@
 from __future__ import annotations
+import contextlib
+from datetime import datetime, timezone
+import json
+import math
 from pathlib import Path
+from typing import Any, Tuple
 
 import torch
 from omegaconf import DictConfig, open_dict
@@ -8,11 +13,8 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast
 from scaletraining.model.model import TransformerNetwork
 from scaletraining.util import find_latest_model_path
 from scaletraining.util.device import resolve_device
+from scaletraining.util.path_utils import config_fingerprint, get_cfg_subset
 
-
-import contextlib
-import math
-from typing import Any, Tuple
 
 import torch.nn as nn
 from torch.amp import autocast
@@ -25,15 +27,15 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 @torch.inference_mode()
-def evaluate_perplexity(
+def evaluate_perplexity_stats(
     model: nn.Module,
     data_loader: DataLoader,
     cfg: Any,
     loss_fn: nn.Module,
     *,
     max_batches: int = 0,
-) -> Tuple[float, float]:
-    """Evaluate average per-token loss and perplexity on a data loader."""
+) -> dict[str, Any]:
+    """Evaluate per-token loss/perplexity and return artifact-friendly stats."""
 
     was_training = model.training
     model.eval()
@@ -67,7 +69,200 @@ def evaluate_perplexity(
     ppl = math.exp(min(50.0, max(-50.0, avg))) if avg != float("inf") else float("inf")
     if was_training:
         model.train()
+    return {
+        "loss": avg,
+        "perplexity": ppl,
+        "total_loss": total_loss,
+        "tokens": total_tokens,
+        "batches": batches_seen,
+        "max_batches": int(max_batches),
+    }
+
+
+@torch.inference_mode()
+def evaluate_perplexity(
+    model: nn.Module,
+    data_loader: DataLoader,
+    cfg: Any,
+    loss_fn: nn.Module,
+    *,
+    max_batches: int = 0,
+) -> Tuple[float, float]:
+    """Evaluate average per-token loss and perplexity on a data loader."""
+
+    stats = evaluate_perplexity_stats(
+        model,
+        data_loader,
+        cfg,
+        loss_fn,
+        max_batches=max_batches,
+    )
+    avg = float(stats["loss"])
+    ppl = float(stats["perplexity"])
     return avg, ppl
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _jsonable(value: Any) -> Any:
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_jsonable(item) for item in value]
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if hasattr(value, "item"):
+        try:
+            return _jsonable(value.item())
+        except Exception:
+            pass
+    try:
+        json.dumps(value)
+    except TypeError:
+        return str(value)
+    return value
+
+
+def _checkpoint_path_from_cfg(
+    cfg: DictConfig,
+    checkpoint_path: str | Path | None = None,
+) -> Path:
+    if checkpoint_path is None:
+        checkpoint_path = cfg.generation.model_path
+    path = Path(str(checkpoint_path)).expanduser()
+    if not path.is_absolute():
+        path = (_REPO_ROOT / path).expanduser()
+    return path.resolve(strict=False)
+
+
+def resolve_eval_output_dir(
+    cfg: DictConfig,
+    checkpoint_path: str | Path | None = None,
+) -> Path:
+    """Return the directory where eval artifacts should be written."""
+
+    configured = getattr(cfg.eval, "output_dir", None)
+    if configured:
+        output_dir = Path(str(configured)).expanduser()
+        if not output_dir.is_absolute():
+            output_dir = (_REPO_ROOT / output_dir).expanduser()
+        return output_dir.resolve(strict=False)
+    return _checkpoint_path_from_cfg(cfg, checkpoint_path).parent
+
+
+def _config_summary(cfg: DictConfig) -> dict[str, Any]:
+    return {
+        "model": {
+            "n_layer": int(cfg.model.n_layer),
+            "n_head": int(cfg.model.n_head),
+            "n_embed": int(cfg.model.n_embed),
+            "n_hidden": int(cfg.model.n_hidden),
+            "max_seq_len": int(cfg.model.max_seq_len),
+            "use_moe": bool(cfg.moe.use_moe),
+            "moe_n_layers": int(cfg.moe.moe_n_layers),
+        },
+        "training": {
+            "seed": int(cfg.training.seed),
+            "batch_size": int(cfg.training.batch_size),
+            "accum_steps": int(cfg.training.accum_steps),
+            "max_train_tokens": int(cfg.training.max_train_tokens),
+            "eval_batch_size": int(cfg.training.eval_batch_size),
+            "eval_max_batches": int(cfg.training.eval_max_batches),
+        },
+        "optimizer": {
+            "primary": str(cfg.optimizer.primary_optimizer),
+            "lr": float(cfg.optimizer.lr),
+        },
+        "eval": {
+            "tasks": str(getattr(cfg.eval, "tasks", "")),
+            "write_results": bool(getattr(cfg.eval, "write_results", True)),
+            "output_dir": getattr(cfg.eval, "output_dir", None),
+        },
+    }
+
+
+def _dataset_summary(cfg: DictConfig) -> dict[str, Any]:
+    fingerprint = config_fingerprint(cfg)
+    return {
+        "fingerprint": fingerprint,
+        "fingerprint_short": fingerprint[:8],
+        "config": get_cfg_subset(cfg),
+    }
+
+
+def build_eval_result(
+    cfg: DictConfig,
+    validation: dict[str, Any],
+    *,
+    checkpoint_path: str | Path | None = None,
+) -> dict[str, Any]:
+    checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    return _jsonable(
+        {
+            "schema_version": 1,
+            "created_at": _utc_now(),
+            "checkpoint": {"path": checkpoint},
+            "dataset": _dataset_summary(cfg),
+            "validation": validation,
+            "config_summary": _config_summary(cfg),
+        }
+    )
+
+
+def build_lm_eval_result(
+    cfg: DictConfig,
+    tasks: list[str],
+    results: dict[str, Any],
+    *,
+    checkpoint_path: str | Path | None = None,
+) -> dict[str, Any]:
+    checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    return _jsonable(
+        {
+            "schema_version": 1,
+            "created_at": _utc_now(),
+            "checkpoint": {"path": checkpoint},
+            "dataset": _dataset_summary(cfg),
+            "tasks": tasks,
+            "results": results,
+            "config_summary": _config_summary(cfg),
+        }
+    )
+
+
+def _write_json(path: Path, payload: dict[str, Any]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+    return path
+
+
+def write_eval_result(
+    cfg: DictConfig,
+    validation: dict[str, Any],
+    *,
+    checkpoint_path: str | Path | None = None,
+) -> Path:
+    output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
+    payload = build_eval_result(cfg, validation, checkpoint_path=checkpoint_path)
+    return _write_json(output_dir / "eval_results.json", payload)
+
+
+def write_lm_eval_result(
+    cfg: DictConfig,
+    tasks: list[str],
+    results: dict[str, Any],
+    *,
+    checkpoint_path: str | Path | None = None,
+) -> Path:
+    output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
+    payload = build_lm_eval_result(cfg, tasks, results, checkpoint_path=checkpoint_path)
+    return _write_json(output_dir / "lm_eval_results.json", payload)
+
 
 def _normalize_output_dir(cfg: DictConfig) -> Path:
     output_root_value = cfg.paths.output_dir

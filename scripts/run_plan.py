@@ -166,6 +166,7 @@ def build_report(args: argparse.Namespace) -> dict:
             "moe_n_layers": n_moe_layers,
         },
         "training": {
+            "seed": int(cfg.training.seed),
             "batch_size": int(cfg.training.batch_size),
             "accum_steps": int(cfg.training.accum_steps),
             "effective_batch_size": int(cfg.training.batch_size) * int(cfg.training.accum_steps),
@@ -210,10 +211,11 @@ def print_markdown(report: dict) -> None:
         print(f"- `{name}`: `{command}`")
     print()
     print("## What To Record After Running")
-    print("- `result.json` final_train_loss and core hyperparameters")
     print("- `outputs/<run>/run_manifest.json` for reproducibility")
-    print("- validation loss/perplexity from `run_evals`")
-    print("- lm-eval table for the selected benchmark tasks")
+    print("- `outputs/<run>/train_result.json` final_train_loss and core hyperparameters")
+    print("- `outputs/<run>/eval_results.json` validation loss/perplexity")
+    print("- `outputs/<run>/lm_eval_results.json` selected benchmark tasks, when run")
+    print("- `outputs/<run>/run_report.json` and `outputs/<run>/run_report.md` evidence bundle")
 
 
 def main(argv: Sequence[str] | None = None) -> int:

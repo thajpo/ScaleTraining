@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from datasets import load_from_disk
+import torch
 from torch.utils.data import DataLoader
 from omegaconf import open_dict
 
@@ -104,12 +105,17 @@ def build_loaders(cfg, for_training: bool = True):
 
     eval_bsz = getattr(cfg.training, "eval_batch_size", cfg.training.batch_size)
     bsz = int(cfg.training.batch_size if for_training else eval_bsz)
+    generator = None
+    if for_training:
+        generator = torch.Generator()
+        generator.manual_seed(int(getattr(cfg.training, "seed", 13)))
 
     train_loader = DataLoader(
         train,
         batch_size=bsz,
         shuffle=bool(for_training),
         drop_last=bool(for_training),
+        generator=generator,
         **loader_kwargs,
     )
 

@@ -1,5 +1,6 @@
 ## Small runtime profile for smoke runs.
 
+seed: 13
 batch_size: 2
 accum_steps: 1
 grad_clip_norm: 1.0
