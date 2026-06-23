@@ -1,6 +1,7 @@
 ## Training runtime and token budget knobs
 
 seed: 13
+compile_model: true
 batch_size: 24
 accum_steps: 3
 grad_clip_norm: 1.0

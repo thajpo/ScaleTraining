@@ -111,6 +111,11 @@ def main(cfg: DictConfig) -> float:
     # Compile model for massive speedups
     # ROCm Triton support improved in PyTorch 2.8+, so enable compile there too
     def _should_compile():
+        if not bool(getattr(cfg.training, "compile_model", True)):
+            return False
+        device = str(getattr(cfg, "device_resolved", None) or cfg.device.device)
+        if device != "cuda":
+            return False
         if torch.version.hip is None:
             return True  # CUDA - always compile
         # ROCm: check version (2.8+ has better Triton support)
@@ -120,7 +125,7 @@ def main(cfg: DictConfig) -> float:
     if _should_compile():
         model = torch.compile(model, mode="max-autotune")
     else:
-        LOGGER.info("Skipping torch.compile on ROCm<2.8 (triton compatibility)")
+        LOGGER.info("Skipping torch.compile for this runtime/configuration")
     loss_fn = nn.CrossEntropyLoss(reduction='sum')  # summed CE, normalized per token in loop
 
     # Sanity check embedding size vs vocab size after metadata auto-set

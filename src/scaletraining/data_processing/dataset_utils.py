@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Iterable, List, Sequence, Tuple
+from typing import Any, List, Tuple
 
 from omegaconf import DictConfig
 from datasets import DatasetDict, concatenate_datasets, load_dataset
@@ -45,6 +45,10 @@ def get_dataset_text_files(cfg: DictConfig) -> list[str]:
     for dataset_path, config_name in dataset_specs:
         label = dataset_path if not config_name else f"{dataset_path}:{config_name}"
         print(label)
+        local_text_files = local_text_dataset_files(dataset_path)
+        if local_text_files:
+            text_files.extend(str(path) for path in local_text_files.values())
+            continue
         # Create a safe filename from the dataset spec
         safe_name = dataset_safe_name(dataset_path, config_name)
         text_file = data_dir / f"{safe_name}.txt"
@@ -144,14 +148,62 @@ def dataset_safe_name(names: Any, configs: Any | None = None) -> str:
     )
 
 
+def _resolve_local_path(value: str) -> Path:
+    path = Path(value).expanduser()
+    if path.is_absolute():
+        return path
+    return (Path.cwd() / path).expanduser()
+
+
+def local_text_dataset_files(dataset_path: str) -> dict[str, Path]:
+    """Return split->text-file mapping when a dataset spec points at local text."""
+
+    path = _resolve_local_path(dataset_path)
+    if path.is_file():
+        return {"train": path}
+    if not path.is_dir():
+        return {}
+
+    candidates = {
+        "train": ["train.txt", "train.text"],
+        "validation": ["validation.txt", "val.txt", "dev.txt"],
+        "test": ["test.txt"],
+    }
+    data_files: dict[str, Path] = {}
+    for split, names in candidates.items():
+        for name in names:
+            candidate = path / name
+            if candidate.is_file():
+                data_files[split] = candidate
+                break
+    return data_files
+
+
+def load_local_text_dataset(dataset_path: str) -> DatasetDict | None:
+    """Load a local text dataset, or return None when the spec is not local."""
+
+    data_files = local_text_dataset_files(dataset_path)
+    if not data_files:
+        return None
+    return load_dataset(
+        "text",
+        data_files={split: str(path) for split, path in data_files.items()},
+    )
+
+
 def load_hf_dataset(
     names: Any, configs: Any | None = None, **kwargs: Any
 ) -> DatasetDict:
-    """Load one or more HuggingFace datasets, concatenating splits when necessary."""
+    """Load one or more HuggingFace or local text datasets."""
 
     specs = normalize_dataset_specs(names, configs)
     datasets = []
     for dataset_path, config_name in specs:
+        local = load_local_text_dataset(dataset_path)
+        if local is not None:
+            datasets.append(local)
+            continue
+
         load_kwargs = dict(kwargs)
         if config_name:
             load_kwargs["name"] = config_name
@@ -188,5 +240,6 @@ __all__ = [
     "normalize_dataset_specs",
     "dataset_label",
     "dataset_safe_name",
+    "load_local_text_dataset",
     "load_hf_dataset",
 ]

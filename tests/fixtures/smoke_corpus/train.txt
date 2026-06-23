@@ -1,0 +1,16 @@
+scale training smoke data proves the pipeline can tokenize pack train and report.
+reproducible artifacts matter because reviewers need evidence not vague claims.
+the tiny model reads local text on cpu and writes a checkpoint manifest.
+each line is plain ascii so the fixture works without network access.
+scale training smoke data proves the pipeline can tokenize pack train and report.
+reproducible artifacts matter because reviewers need evidence not vague claims.
+the tiny model reads local text on cpu and writes a checkpoint manifest.
+each line is plain ascii so the fixture works without network access.
+scale training smoke data proves the pipeline can tokenize pack train and report.
+reproducible artifacts matter because reviewers need evidence not vague claims.
+the tiny model reads local text on cpu and writes a checkpoint manifest.
+each line is plain ascii so the fixture works without network access.
+scale training smoke data proves the pipeline can tokenize pack train and report.
+reproducible artifacts matter because reviewers need evidence not vague claims.
+the tiny model reads local text on cpu and writes a checkpoint manifest.
+each line is plain ascii so the fixture works without network access.

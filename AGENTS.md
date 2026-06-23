@@ -25,6 +25,7 @@ uv run python -m scaletraining.entrypoints.train --help
 uv run python -m scaletraining.entrypoints.run_evals --help
 uv run python -m scaletraining.entrypoints.run_lm_eval --help
 uv run python scripts/run_plan.py --model-size tiny --token-budget 4096 -o device=cpu -o training=smoke
+uv run python scripts/smoke_cpu_e2e.py
 ```
 
 Avoid live long training, streaming corpus builds, and lm-eval benchmark runs in

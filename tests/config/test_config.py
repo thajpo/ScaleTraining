@@ -14,6 +14,7 @@ def test_project_config_schema_imports_and_merges_minimal_config():
             },
             "training": {
                 "seed": 13,
+                "compile_model": False,
                 "batch_size": 1,
                 "accum_steps": 1,
                 "grad_clip_norm": 1.0,
@@ -132,4 +133,5 @@ def test_project_config_schema_imports_and_merges_minimal_config():
     assert loaded.eval.write_results is True
     assert loaded.eval.output_dir is None
     assert loaded.training.seed == 13
+    assert loaded.training.compile_model is False
     assert loaded.sweep is None

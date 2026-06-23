@@ -167,6 +167,7 @@ def build_report(args: argparse.Namespace) -> dict:
         },
         "training": {
             "seed": int(cfg.training.seed),
+            "compile_model": bool(cfg.training.compile_model),
             "batch_size": int(cfg.training.batch_size),
             "accum_steps": int(cfg.training.accum_steps),
             "effective_batch_size": int(cfg.training.batch_size) * int(cfg.training.accum_steps),

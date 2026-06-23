@@ -1,0 +1,4 @@
+scale training validation text checks perplexity on local cpu data.
+the report script combines the manifest training result and eval result.
+scale training validation text checks perplexity on local cpu data.
+the report script combines the manifest training result and eval result.

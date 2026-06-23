@@ -34,6 +34,7 @@
 ### Evaluation / Infra
 - [Eval] Strengthen eval harness (Wikitext PPL + one MC benchmark).
 - [Testing] Add missing model/training-loop regression tests.
+- [Wrap-up] Add final README training-run evidence series.
 
 ## Completed
 ### [Dense+MoE] Fix FFN residual wiring and split sublayer LayerNorms
@@ -44,6 +45,47 @@
   - Regression coverage exists in `tests/model/test_model.py`.
 
 ## Specd
+### [Wrap-up] Hardware-agnostic reviewer smoke, CI, and docs
+- status: `review`
+- behavior change:
+  - CI has stable `lint`, `test`, and `smoke` jobs.
+  - `lint` uses syntax compilation and public entrypoint help checks.
+  - `smoke` runs offline CPU prepare/train/eval/report over local fixture text.
+  - Local text dataset specs are supported without HuggingFace network access.
+  - CPU smoke skips `torch.compile`.
+  - Generated `result.json` and `src/scaletraining.egg-info/` are removed from source control and ignored.
+- files to touch:
+  - `.github/workflows/ci.yml`
+  - `src/scaletraining/data_processing/dataset_utils.py`
+  - `src/scaletraining/entrypoints/train.py`
+  - `scripts/smoke_cpu_e2e.py`
+  - `tests/fixtures/smoke_corpus/*`
+  - docs, config schema, and tests
+- fail-first tests:
+  - Local text dataset loading unit test.
+  - Config schema test for `training.compile_model`.
+  - Offline smoke script verifies run artifact sidecars in a temp directory.
+- non-goals:
+  - No final training-run series selection yet.
+  - No Ruff/style-lint rollout.
+  - No raw checkpoint artifacts committed.
+- risks:
+  - Smoke proves pipeline wiring, not model quality.
+  - Local fixture support must not break existing HuggingFace dataset behavior.
+- touch points:
+  - `dataset_utils.load_hf_dataset` -> local text branch before HF loading.
+  - `train.py` -> compile skip/config gate.
+  - `.github/workflows/ci.yml` -> stable job names.
+- expected diff shape:
+  - Add one smoke script and tiny fixture data.
+  - Remove tracked generated artifacts.
+  - Modify CI, docs, config, dataset loading, and tests.
+- review checks:
+  - `uv run pytest -q`
+  - `uv run python -m compileall -q src scripts tests`
+  - public entrypoint `--help` checks
+  - `uv run python scripts/smoke_cpu_e2e.py`
+
 ### [Infra] Persist reproducible eval and run evidence artifacts
 - status: `review`
 - behavior change:

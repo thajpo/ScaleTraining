@@ -2,6 +2,8 @@
 
 ScaleTraining is a single-GPU language-model training harness for dense and Mixture-of-Experts decoder-only transformers. It is a personal ML systems project focused on the infrastructure around training: configuration, preprocessing artifacts, token-budgeted training, checkpointing, evaluation, and reproducible run metadata.
 
+The repo is intentionally reviewable without a GPU. The default verification path runs unit tests and an offline CPU end-to-end smoke over a tiny local text fixture, then proves the same artifact contract used for larger runs.
+
 ## What This Demonstrates
 
 - Hydra-based experiment configuration with small overrideable config groups.
@@ -25,10 +27,20 @@ These commands do not train a model or require a GPU.
 
 ```bash
 uv run pytest -q
+uv run python -m compileall -q src scripts tests
 uv run python -m scaletraining.entrypoints.train --help
+uv run python -m scaletraining.entrypoints.prepare_data --help
 uv run python -m scaletraining.entrypoints.run_evals --help
 uv run python -m scaletraining.entrypoints.run_lm_eval --help
 ```
+
+To exercise the full artifact path on CPU without network access:
+
+```bash
+uv run python scripts/smoke_cpu_e2e.py
+```
+
+The smoke command creates a temporary run directory, prepares local fixture data, trains a tiny model, evaluates validation perplexity, builds a run report, and verifies the expected sidecar artifacts.
 
 Slow optimizer convergence coverage is intentionally excluded from the default test run. To inspect it:
 
@@ -52,7 +64,19 @@ flowchart LR
     bench --> report
 ```
 
-## Happy Path
+## Reviewer Path
+
+Use this path when inspecting the repository without GPU access or external dataset downloads:
+
+```bash
+uv run pytest -q
+uv run python -m compileall -q src scripts tests
+uv run python scripts/smoke_cpu_e2e.py
+```
+
+The smoke run verifies that `prepare_data`, `train`, `run_evals`, and `run_report` work together on CPU and produce `run_manifest.json`, `train_result.json`, `eval_results.json`, `run_report.json`, and `run_report.md`.
+
+## Training Path
 
 Training requires preprocessed artifacts. Run data prep first, then train, then evaluate or generate from a checkpoint.
 
@@ -117,6 +141,20 @@ After a run, the canonical evidence bundle is:
 - `outputs/<run>/lm_eval_results.json`: lm-eval tasks and result payload when benchmarks are run.
 - `outputs/<run>/run_report.json` and `outputs/<run>/run_report.md`: machine-readable and reviewer-readable summaries.
 
+## Wrap-Up Evidence
+
+The final project artifact should be a small checked-in summary of several completed runs, not raw checkpoints. The intended format is a Markdown table in this README backed by compact JSON/Markdown reports with:
+
+- run id and command summary,
+- dataset fingerprint and token budget,
+- model shape and optimizer,
+- final train loss,
+- validation loss/perplexity,
+- benchmark results when available,
+- notes about hardware and runtime.
+
+Raw `outputs/` directories and model weights stay ignored. Only compact evidence summaries should be committed.
+
 ## Configuration
 
 Key config groups live under `conf/`:
@@ -174,6 +212,7 @@ Implemented and tested in the quick suite:
 - MoE routing-stat emission,
 - reproducible eval sidecars and run reports,
 - configured training seed for controlled comparisons,
+- offline CPU smoke path over local fixture data,
 - batch packing,
 - optimizer smoke behavior.
 

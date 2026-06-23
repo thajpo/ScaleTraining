@@ -1,6 +1,7 @@
 # Byte-compiled / cache
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 # OS
 .DS_Store
@@ -18,6 +19,7 @@ wandb/
 
 # Logs
 *.log
+result.json
 
 datasets/
 data/
