@@ -20,7 +20,8 @@ Hydra config
    -> optional MoE blocks
 -> token-budget training loop
 -> W&B/run manifests/checkpoints
--> perplexity and lm-eval style evaluation
+-> perplexity and lm-eval style evaluation artifacts
+-> run report evidence bundle
 -> qualitative generation from checkpoint
 ```
 
@@ -46,12 +47,16 @@ Hydra config
   tokenization/packing.
 - Dense and MoE models share the same training surface.
 - Evaluation and generation are separated from training for reproducibility.
+- Evaluation sidecars and run reports preserve metrics next to checkpoints.
+- The reviewer smoke path is CPU-only and uses local fixture text instead of
+  HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,
   optimizer behavior, and training-loop utilities.
 
 ## Current Limits
 
 - Full training and benchmark runs can require a GPU and significant time.
+- CPU smoke runs prove wiring and artifact contracts, not model quality.
 - Some eval paths are still evolving; do not oversell benchmark completeness.
 - Large runs should be represented by explicit run reports rather than broad
   scale claims.

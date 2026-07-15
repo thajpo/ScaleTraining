@@ -33,6 +33,7 @@ from scaletraining.util.model_stats import (
 
 from scaletraining.data_processing.tokenizer import TextTokenizer
 from scaletraining.config import load_project_config
+from scaletraining.util.training_utils import set_random_seed
 
 
 LOGGER = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ def main(cfg: DictConfig) -> float:
     """
 
     cfg = load_project_config(cfg)
+    set_random_seed(int(cfg.training.seed))
 
     # Resolve device, configure kernels, and free any stale CUDA cache
     configure_rocm_and_sdp(cfg.device)
@@ -109,6 +111,11 @@ def main(cfg: DictConfig) -> float:
     # Compile model for massive speedups
     # ROCm Triton support improved in PyTorch 2.8+, so enable compile there too
     def _should_compile():
+        if not bool(getattr(cfg.training, "compile_model", True)):
+            return False
+        device = str(getattr(cfg, "device_resolved", None) or cfg.device.device)
+        if device != "cuda":
+            return False
         if torch.version.hip is None:
             return True  # CUDA - always compile
         # ROCm: check version (2.8+ has better Triton support)
@@ -118,7 +125,7 @@ def main(cfg: DictConfig) -> float:
     if _should_compile():
         model = torch.compile(model, mode="max-autotune")
     else:
-        LOGGER.info("Skipping torch.compile on ROCm<2.8 (triton compatibility)")
+        LOGGER.info("Skipping torch.compile for this runtime/configuration")
     loss_fn = nn.CrossEntropyLoss(reduction='sum')  # summed CE, normalized per token in loop
 
     # Sanity check embedding size vs vocab size after metadata auto-set
@@ -140,14 +147,20 @@ def main(cfg: DictConfig) -> float:
         "primary_optimizer": cfg.optimizer.primary_optimizer,
         "use_rope": bool(cfg.model.use_rope),
         "lr": float(cfg.optimizer.lr),
+        "seed": int(cfg.training.seed),
         "batch_size": int(cfg.training.batch_size),
         "accum_steps": int(cfg.training.accum_steps),
+        "max_train_tokens": int(cfg.training.max_train_tokens),
         "max_seq_len": int(cfg.model.max_seq_len),
         "n_layer": int(cfg.model.n_layer),
         "n_head": int(cfg.model.n_head),
         "n_embed": int(cfg.model.n_embed),
+        "run_dir": str(run_dir),
+        "model_path": str(Path(run_dir) / "model.pt"),
     }
     with open(Path.cwd() / "result.json", "w", encoding="utf-8") as f:
+        json.dump(job_result, f, indent=2, sort_keys=True)
+    with open(Path(run_dir) / "train_result.json", "w", encoding="utf-8") as f:
         json.dump(job_result, f, indent=2, sort_keys=True)
     # Also print a single-line summary that's easy to grep
     print("RESULT:", json.dumps(job_result))

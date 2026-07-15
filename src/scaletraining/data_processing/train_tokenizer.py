@@ -27,7 +27,7 @@ def train_tokenizer_from_cfg(cfg: DictConfig) -> str:
         vocab_size=cfg.tokenizer.custom_tokenizer_vocab_size,
         show_progress=True,
         max_token_length=10,
-        special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]"],
+        special_tokens=["[UNK]", "[CLS]", "[SEP]", "[PAD]", "[MASK]", "[EOS]"],
     )
     tokenizer.pre_tokenizer = Whitespace()
 

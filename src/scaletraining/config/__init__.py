@@ -142,6 +142,8 @@ class MoeConfig:
 
 @dataclass
 class TrainingConfig:
+    seed: int = field(default=MISSING)
+    compile_model: bool = field(default=MISSING)
     batch_size: int = field(default=MISSING)
     accum_steps: int = field(default=MISSING)
     grad_clip_norm: float = field(default=MISSING)
@@ -162,6 +164,8 @@ class TrainingConfig:
 @dataclass
 class EvalConfig:
     tasks: str = field(default="hellaswag")
+    write_results: bool = field(default=True)
+    output_dir: Optional[str] = field(default=None)
 
 
 @dataclass

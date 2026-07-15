@@ -34,42 +34,110 @@
 ### Evaluation / Infra
 - [Eval] Strengthen eval harness (Wikitext PPL + one MC benchmark).
 - [Testing] Add missing model/training-loop regression tests.
+- [Wrap-up] Add final README training-run evidence series.
+
+## Completed
+### [Dense+MoE] Fix FFN residual wiring and split sublayer LayerNorms
+- status: `completed`
+- outcome:
+  - `MLPBlock.forward` no longer applies an internal residual.
+  - `TransformerBlock` and `MoEBlock` use separate `ln1` / `ln2` pre-norm sublayers.
+  - Regression coverage exists in `tests/model/test_model.py`.
 
 ## Specd
-### [Dense+MoE] Fix FFN residual wiring and split sublayer LayerNorms
-- status: `ready`
+### [Wrap-up] Hardware-agnostic reviewer smoke, CI, and docs
+- status: `review`
 - behavior change:
-  - Remove internal residual addition from `MLPBlock.forward`; residual is applied once at block level.
-  - Split shared block norm into `ln1` and `ln2` in both `TransformerBlock` and `MoEBlock`.
-  - Keep pre-norm residual structure: `x + attention(ln1(x))` and `x + ffn_or_moe(ln2(x))`.
+  - CI has stable `lint`, `test`, and `smoke` jobs.
+  - `lint` uses syntax compilation and public entrypoint help checks.
+  - `smoke` runs offline CPU prepare/train/eval/report over local fixture text.
+  - Local text dataset specs are supported without HuggingFace network access.
+  - CPU smoke skips `torch.compile`.
+  - Generated `result.json` and `src/scaletraining.egg-info/` are removed from source control and ignored.
 - files to touch:
-  - `src/scaletraining/model/model.py`
-  - `tests/model/test_model.py`
+  - `.github/workflows/ci.yml`
+  - `src/scaletraining/data_processing/dataset_utils.py`
+  - `src/scaletraining/entrypoints/train.py`
+  - `scripts/smoke_cpu_e2e.py`
+  - `tests/fixtures/smoke_corpus/*`
+  - docs, config schema, and tests
 - fail-first tests:
-  - Add a unit test where `MLPBlock` projections are zeroed and dropout disabled; expected output is all zeros (fails on current residual-inside-MLP behavior).
-  - Add a unit test asserting `TransformerBlock` and `MoEBlock` expose `ln1` and `ln2`.
-  - Add a forward/backward finite smoke test for both dense and MoE block paths.
+  - Local text dataset loading unit test.
+  - Config schema test for `training.compile_model`.
+  - Offline smoke script verifies run artifact sidecars in a temp directory.
 - non-goals:
-  - No `moe_n_layers` policy changes.
-  - No router/gating/capacity behavior changes.
-  - No checkpoint key remap or compatibility shim for old checkpoints.
+  - No final training-run series selection yet.
+  - No Ruff/style-lint rollout.
+  - No raw checkpoint artifacts committed.
 - risks:
-  - Training dynamics will shift due to corrected residual math and norm placement.
-  - Existing checkpoints trained with prior wiring are intentionally unsupported (fail-fast policy).
-- touch points (path + function/class/block):
-  - `src/scaletraining/model/model.py` -> `MLPBlock.forward`
-  - `src/scaletraining/model/model.py` -> `TransformerBlock.__init__` / `TransformerBlock.forward`
-  - `src/scaletraining/model/model.py` -> `MoEBlock.__init__` / `MoEBlock.forward`
-  - `tests/model/test_model.py` -> new block-structure and residual-behavior tests
-- line anchors (optional):
-  - `src/scaletraining/model/model.py`: around `MLPBlock`, `TransformerBlock`, `MoEBlock`
+  - Smoke proves pipeline wiring, not model quality.
+  - Local fixture support must not break existing HuggingFace dataset behavior.
+- touch points:
+  - `dataset_utils.load_hf_dataset` -> local text branch before HF loading.
+  - `train.py` -> compile skip/config gate.
+  - `.github/workflows/ci.yml` -> stable job names.
 - expected diff shape:
-  - Modify 2 files.
-  - Roughly +60 to +140 LOC (mostly new tests, small model edits).
+  - Add one smoke script and tiny fixture data.
+  - Remove tracked generated artifacts.
+  - Modify CI, docs, config, dataset loading, and tests.
 - review checks:
-  - `pytest tests/model/test_model.py`
-  - Forward/backward finite checks pass for dense and MoE block smoke tests.
-  - No unrelated architecture or routing logic changes in diff.
+  - `uv run pytest -q`
+  - `uv run python -m compileall -q src scripts tests`
+  - public entrypoint `--help` checks
+  - `uv run python scripts/smoke_cpu_e2e.py`
+
+### [Infra] Persist reproducible eval and run evidence artifacts
+- status: `review`
+- behavior change:
+  - Keep `evaluate_perplexity(...) -> (loss, perplexity)` compatible while adding a richer stats helper for artifact writing.
+  - `run_evals.py` writes `eval_results.json` next to the resolved checkpoint by default.
+  - `run_lm_eval.py` writes `lm_eval_results.json` next to the resolved checkpoint by default.
+  - `train.py` keeps writing root `result.json` and also writes `train_result.json` into the checkpoint run directory.
+  - `scripts/run_report.py --run-dir outputs/<run>` combines manifest, train, eval, and lm-eval artifacts into `run_report.json` and `run_report.md`.
+  - `training.seed` controls Torch/runtime seeding and the shuffled training DataLoader generator.
+- files to touch:
+  - `src/scaletraining/util/eval_utils.py`
+  - `src/scaletraining/entrypoints/run_evals.py`
+  - `src/scaletraining/entrypoints/run_lm_eval.py`
+  - `src/scaletraining/entrypoints/train.py`
+  - `src/scaletraining/data_processing/dataloading.py`
+  - `src/scaletraining/config/__init__.py`
+  - `conf/training/default.yaml`
+  - `conf/training/smoke.yaml`
+  - `conf/eval/default.yaml`
+  - `scripts/run_report.py`
+  - docs and focused tests
+- fail-first tests:
+  - Unit test artifact writing with a temp checkpoint path and no real model checkpoint.
+  - Unit test config schema accepts `eval.write_results`, `eval.output_dir`, and `training.seed`.
+  - Unit test `evaluate_perplexity` still returns the existing two-value tuple.
+  - Unit test `scripts/run_report.py` handles complete and partial run directories.
+- non-goals:
+  - No expensive training or live lm-eval benchmark run.
+  - No new model architecture features.
+  - No checkpoint format migration.
+- risks:
+  - Eval result JSON must remain valid when metrics are non-finite.
+  - Sidecar artifact paths should not surprise users who override checkpoint paths.
+  - Seed support improves controlled comparisons but does not guarantee full GPU determinism.
+- touch points (path + function/class/block):
+  - `src/scaletraining/util/eval_utils.py` -> eval stats/result builders and writers
+  - `src/scaletraining/entrypoints/run_evals.py` -> validation result persistence
+  - `src/scaletraining/entrypoints/run_lm_eval.py` -> benchmark result persistence
+  - `src/scaletraining/entrypoints/train.py` -> run-local train result sidecar
+  - `src/scaletraining/data_processing/dataloading.py` -> seeded shuffle generator
+- line anchors (optional):
+  - n/a
+- expected diff shape:
+  - Add one reporting script and one repo agent guide.
+  - Modify eval/train/config/data loading/docs/tests.
+  - Roughly +350 to +550 LOC including tests and docs.
+- review checks:
+  - `uv run pytest -q tests/config/test_config.py tests/util/test_eval_utils.py tests/test_run_report.py`
+  - `uv run python -m compileall -q src scripts tests`
+  - `uv run pytest -q`
+  - `uv run python -m scaletraining.entrypoints.run_evals --help`
+  - `uv run python scripts/run_plan.py --model-size tiny --token-budget 4096 -o device=cpu -o training=smoke`
 
 Required contract for each `Specd` item:
 - behavior change

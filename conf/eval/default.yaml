@@ -3,3 +3,7 @@
 # Comma-separated list of tasks to evaluate (e.g., hellaswag,mmlu,arc_easy)
 # Can also be set via LM_EVAL_TASKS environment variable
 tasks: "hellaswag"
+
+# Persist machine-readable evaluation artifacts next to the checkpoint by default.
+write_results: true
+output_dir: null

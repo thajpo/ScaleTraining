@@ -9,7 +9,10 @@ import torch.nn as nn
 
 from scaletraining.config import load_project_config
 from scaletraining.util import resolve_device
-from scaletraining.util.eval_utils import evaluate_perplexity
+from scaletraining.util.eval_utils import (
+    evaluate_perplexity_stats,
+    write_eval_result,
+)
 from scaletraining.data_processing import build_loaders
 from scaletraining.util.eval_utils import load_pretrained_model_and_tokenizer
 
@@ -31,14 +34,19 @@ def main(cfg: DictConfig) -> None:
         )
 
     loss_fn = nn.CrossEntropyLoss(reduction="sum")
-    v_loss, v_ppl = evaluate_perplexity(
+    metrics = evaluate_perplexity_stats(
         model,
         val_loader,
         cfg,
         loss_fn,
         max_batches=int(getattr(cfg.training, "eval_max_batches", 0)),
     )
+    v_loss = float(metrics["loss"])
+    v_ppl = float(metrics["perplexity"])
     print(f"Validation loss: {v_loss:.4f} | perplexity: {v_ppl:.3f}")
+    if bool(getattr(cfg.eval, "write_results", True)):
+        result_path = write_eval_result(cfg, metrics)
+        print(f"Evaluation results written to: {result_path}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,0 @@
-[console_scripts]
-scaletraining-generate = scaletraining.entrypoints.generate:main
-scaletraining-pack = scaletraining.data_processing.batch_packer:main
-scaletraining-prepare-data = scaletraining.entrypoints.prepare_data:main
-scaletraining-tokenize = scaletraining.data_processing.tokenization:main
-scaletraining-train = scaletraining.entrypoints.train:main

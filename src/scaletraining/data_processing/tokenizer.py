@@ -89,7 +89,7 @@ class TextTokenizer:
         raw_tokenizer = RawTokenizer.from_file(str(tokenizer_path))
         tok = PreTrainedTokenizerFast(tokenizer_object=raw_tokenizer)
         if tok.eos_token_id is None:
-            tok.add_special_tokens({"eos_token": ""})
+            tok.add_special_tokens({"eos_token": "[EOS]"})
         if tok.pad_token_id is None and tok.eos_token is not None:
             tok.pad_token = tok.eos_token
 

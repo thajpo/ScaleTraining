@@ -24,6 +24,8 @@ def log_train_metrics(
 ) -> None:
     """Log core training-loop statistics keyed by total tokens processed."""
 
+    if wandb_sdk is None or getattr(wandb_sdk, "run", None) is None:
+        return
     metrics = {
         "used tokens": used_tokens,
         "train_per_token_loss": loss,
@@ -42,6 +44,8 @@ def log_eval_metrics(
 ) -> None:
     """Log validation loss/perplexity keyed by the training token count."""
 
+    if wandb_sdk is None or getattr(wandb_sdk, "run", None) is None:
+        return
     metrics = {
         "used tokens": used_tokens,
         "valid_per_token_loss": val_loss,
@@ -53,6 +57,8 @@ def log_eval_metrics(
 def log_moe_metrics(*, used_tokens: int, metrics: dict) -> None:
     """Log MoE routing statistics keyed by the training token count."""
 
+    if wandb_sdk is None or getattr(wandb_sdk, "run", None) is None:
+        return
     if not metrics:
         return
     payload = dict(metrics)

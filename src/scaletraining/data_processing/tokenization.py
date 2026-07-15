@@ -19,6 +19,8 @@ def tokenize_dataset(cfg, tok: TextTokenizer) -> None:
     """
     save_path = get_tokenized_directory(cfg, for_training=True)
     max_len = int(cfg.model.max_seq_len)
+    if tok.eos_id is None:
+        raise ValueError("Tokenizer must define an EOS token id before tokenization.")
 
     try:
         ds = load_hf_dataset(
