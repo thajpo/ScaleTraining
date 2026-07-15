@@ -16,15 +16,19 @@ jobs:
           enable-cache: true
       - name: Install Python
         run: uv python install 3.12
+      - name: Install CPU test environment
+        run: |
+          uv sync --python 3.12 --locked --no-install-package torch --no-install-package pytorch-triton-rocm
+          uv pip install "torch==2.7.1+cpu" --index-url https://download.pytorch.org/whl/cpu
       - name: Compile source and tests
-        run: uv run python -m compileall -q src scripts tests
+        run: uv run --no-sync python -m compileall -q src scripts tests
       - name: Check public entrypoints
         run: |
-          uv run python -m scaletraining.entrypoints.prepare_data --help >/tmp/prepare-help.txt
-          uv run python -m scaletraining.entrypoints.train --help >/tmp/train-help.txt
-          uv run python -m scaletraining.entrypoints.run_evals --help >/tmp/evals-help.txt
-          uv run python -m scaletraining.entrypoints.run_lm_eval --help >/tmp/lm-eval-help.txt
-          uv run python -m scaletraining.entrypoints.generate_from_pretrained --help >/tmp/generate-help.txt
+          uv run --no-sync python -m scaletraining.entrypoints.prepare_data --help >/tmp/prepare-help.txt
+          uv run --no-sync python -m scaletraining.entrypoints.train --help >/tmp/train-help.txt
+          uv run --no-sync python -m scaletraining.entrypoints.run_evals --help >/tmp/evals-help.txt
+          uv run --no-sync python -m scaletraining.entrypoints.run_lm_eval --help >/tmp/lm-eval-help.txt
+          uv run --no-sync python -m scaletraining.entrypoints.generate_from_pretrained --help >/tmp/generate-help.txt
 
   test:
     runs-on: ubuntu-latest
@@ -35,8 +39,12 @@ jobs:
           enable-cache: true
       - name: Install Python
         run: uv python install 3.12
+      - name: Install CPU test environment
+        run: |
+          uv sync --python 3.12 --locked --no-install-package torch --no-install-package pytorch-triton-rocm
+          uv pip install "torch==2.7.1+cpu" --index-url https://download.pytorch.org/whl/cpu
       - name: Run quick tests
-        run: uv run pytest -q
+        run: uv run --no-sync pytest -q
 
   smoke:
     runs-on: ubuntu-latest
@@ -47,5 +55,9 @@ jobs:
           enable-cache: true
       - name: Install Python
         run: uv python install 3.12
+      - name: Install CPU test environment
+        run: |
+          uv sync --python 3.12 --locked --no-install-package torch --no-install-package pytorch-triton-rocm
+          uv pip install "torch==2.7.1+cpu" --index-url https://download.pytorch.org/whl/cpu
       - name: Run offline CPU smoke
-        run: uv run python scripts/smoke_cpu_e2e.py
+        run: uv run --no-sync python scripts/smoke_cpu_e2e.py
