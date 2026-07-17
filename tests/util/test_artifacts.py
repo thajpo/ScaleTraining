@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import torch
 from omegaconf import OmegaConf
@@ -118,3 +119,28 @@ def test_run_directory_allocation_avoids_same_second_collisions(tmp_path):
     assert first != second
     assert first.parent == second.parent
     assert second.name.endswith("__2")
+
+
+def test_run_directory_allocation_retries_concurrent_collision(tmp_path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    output_root = tmp_path / "outputs"
+    original_mkdir = Path.mkdir
+    collided_names = []
+
+    def mkdir_with_collision(path, *args, **kwargs):
+        if (
+            path.parent == output_root
+            and kwargs.get("exist_ok") is False
+            and not collided_names
+        ):
+            original_mkdir(path, *args, **kwargs)
+            collided_names.append(path.name)
+            raise FileExistsError(path)
+        return original_mkdir(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "mkdir", mkdir_with_collision)
+
+    run_dir = create_run_dir(cfg)
+
+    assert (output_root / collided_names[0]).is_dir()
+    assert run_dir.name == f"{collided_names[0]}__2"

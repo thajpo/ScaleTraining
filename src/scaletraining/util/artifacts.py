@@ -168,13 +168,19 @@ def create_run_dir(cfg: Any, out_root: Optional[str] = None) -> Path:
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     fingerprint = config_fingerprint(cfg)[:8]
     run_dir_name = "__".join(filter(None, [tag, f"v={fingerprint}", timestamp]))
-    run_dir = output_root / run_dir_name
-    suffix = 2
-    while run_dir.exists():
-        run_dir = output_root / f"{run_dir_name}__{suffix}"
-        suffix += 1
-    run_dir.mkdir()
-    return run_dir
+    suffix = 1
+    while True:
+        run_dir = (
+            output_root / run_dir_name
+            if suffix == 1
+            else output_root / f"{run_dir_name}__{suffix}"
+        )
+        try:
+            run_dir.mkdir(exist_ok=False)
+        except FileExistsError:
+            suffix += 1
+            continue
+        return run_dir
 
 
 def save_model(
