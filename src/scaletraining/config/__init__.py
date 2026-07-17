@@ -181,6 +181,7 @@ class ProjectConfig:
     moe: MoeConfig = field(default=MISSING)
     sweep: Optional[SweepConfig] = field(default=None)
     eval: EvalConfig = field(default_factory=EvalConfig)
+    device_requested: Optional[str] = field(default=None)
     device_resolved: Optional[str] = field(default=None)
 
 

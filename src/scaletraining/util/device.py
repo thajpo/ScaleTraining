@@ -22,6 +22,9 @@ def resolve_device(cfg: DictConfig) -> str:
 
     device_cfg = cfg.device
     requested = getattr(device_cfg, "device", None)
+    recorded_request = getattr(cfg, "device_requested", None)
+    if recorded_request is None:
+        recorded_request = requested
 
     if isinstance(requested, str) and requested:
         device = requested
@@ -43,6 +46,7 @@ def resolve_device(cfg: DictConfig) -> str:
 
     try:
         with open_dict(cfg):
+            cfg.device_requested = recorded_request
             cfg.device_resolved = device
     except Exception:
         pass

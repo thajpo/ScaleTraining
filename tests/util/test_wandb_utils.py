@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from omegaconf import OmegaConf
 
 from scaletraining.util import wandb_utils
+from scaletraining.util.device import resolve_device
 
 
 class FakeRun:
@@ -102,6 +103,28 @@ def test_init_defines_schema_v1_metrics_and_returns_serializable_identity(monkey
         ("compute/*", {"step_metric": "progress/tokens"}),
         ("moe/*", {"step_metric": "progress/tokens"}),
     ]
+
+
+def test_cuda_fallback_provenance_is_in_wandb_config(monkeypatch):
+    cfg = _cfg()
+    cfg.device = {"device": "cuda"}
+    cfg.device_requested = None
+    cfg.device_resolved = None
+    fake = FakeWandb()
+    monkeypatch.setattr("torch.cuda.is_available", lambda: False)
+    monkeypatch.setattr(wandb_utils, "wandb_sdk", fake)
+
+    assert resolve_device(cfg) == "cpu"
+    wandb_utils.init_wandb(
+        cfg,
+        tokenizer_vocab_size=128,
+        tok=SimpleNamespace(name_or_path="fixture-tokenizer"),
+    )
+
+    config = fake.init_kwargs["config"]
+    assert config["device_requested"] == "cuda"
+    assert config["device_resolved"] == "cpu"
+    assert config["device"]["device"] == "cpu"
 
 
 def test_schema_v1_payloads_share_explicit_token_and_optimizer_axes(monkeypatch):

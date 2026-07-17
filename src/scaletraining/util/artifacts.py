@@ -74,7 +74,9 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
             "max_train_tokens": training_cfg.max_train_tokens,
             "max_val_tokens": training_cfg.max_val_tokens,
             "eval_interval_tokens": training_cfg.eval_interval_tokens,
-            "device_requested": cfg.device.device,
+            "device_requested": (
+                getattr(cfg, "device_requested", None) or cfg.device.device
+            ),
             "device_resolved": getattr(cfg, "device_resolved", None),
         },
         "transformer": {

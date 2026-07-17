@@ -10,6 +10,7 @@ from scaletraining.util.artifacts import (
     save_run_manifest,
     update_run_manifest,
 )
+from scaletraining.util.device import resolve_device
 
 
 def _cfg(tmp_path):
@@ -108,6 +109,20 @@ def test_existing_run_directory_is_reused_for_all_checkpoint_artifacts(tmp_path)
     assert manifest["training"]["device_resolved"] == "cpu"
     assert manifest["transformer"]["max_seq_len"] == 4
     assert manifest["moe"]["enabled"] is False
+
+
+def test_manifest_preserves_requested_cuda_after_cpu_fallback(tmp_path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    cfg.device.device = "cuda"
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    assert resolve_device(cfg) == "cpu"
+    run_dir = create_run_dir(cfg)
+    save_run_manifest(cfg, str(run_dir))
+
+    manifest = json.loads((run_dir / "run_manifest.json").read_text())
+    assert manifest["training"]["device_requested"] == "cuda"
+    assert manifest["training"]["device_resolved"] == "cpu"
 
 
 def test_run_directory_allocation_avoids_same_second_collisions(tmp_path):
