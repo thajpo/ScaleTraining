@@ -249,13 +249,13 @@ def init_wandb(cfg: Any, tokenizer_vocab_size: int, tok: Any) -> WandbRunIdentit
     return _identity_from_run(run)
 
 
-def finish_wandb() -> None:
+def finish_wandb(exit_code: int = 0) -> None:
     """Finalize an active W&B run without changing training error semantics."""
 
     if wandb_sdk is None or getattr(wandb_sdk, "run", None) is None:
         return
     try:
-        wandb_sdk.finish()
+        wandb_sdk.finish(exit_code=int(exit_code))
     except Exception as exc:  # pragma: no cover - SDK failures are environment-specific
         LOGGER.warning("W&B finalization failed: %s", exc)
 

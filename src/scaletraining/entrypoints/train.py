@@ -94,6 +94,7 @@ def run_training(cfg: DictConfig) -> float:
         tok=tokenizer.tok,
         tokenizer_vocab_size=tokenizer.vocab_size,
     )
+    wandb_exit_code = 0
 
     try:
         save_run_manifest(
@@ -179,10 +180,11 @@ def run_training(cfg: DictConfig) -> float:
         print("RESULT:", json.dumps(job_result))
         return final_train_loss if final_train_loss is not None else float("inf")
     except BaseException as exc:
+        wandb_exit_code = 1
         _record_failed_run(run_dir, exc)
         raise
     finally:
-        finish_wandb()
+        finish_wandb(exit_code=wandb_exit_code)
 
 
 @hydra.main(

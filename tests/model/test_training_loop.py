@@ -162,10 +162,41 @@ def test_timing_synchronization_only_runs_for_available_cuda(monkeypatch):
     monkeypatch.setattr(
         training_loop.torch.cuda,
         "synchronize",
-        lambda: calls.append("sync"),
+        lambda *, device: calls.append(device),
     )
 
-    training_loop._synchronize_for_timing("cpu")
-    training_loop._synchronize_for_timing("cuda")
+    training_loop._synchronize_for_timing(torch.device("cpu"))
+    training_loop._synchronize_for_timing(torch.device("cuda:1"))
 
-    assert calls == ["sync"]
+    assert calls == [torch.device("cuda:1")]
+
+
+def test_peak_memory_operations_use_the_selected_cuda_device(monkeypatch):
+    calls = []
+    device = torch.device("cuda:1")
+    monkeypatch.setattr(training_loop.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(
+        training_loop.torch.cuda,
+        "reset_peak_memory_stats",
+        lambda *, device: calls.append(("reset", device)),
+    )
+    monkeypatch.setattr(
+        training_loop.torch.cuda,
+        "max_memory_allocated",
+        lambda *, device: calls.append(("allocated", device)) or 1024,
+    )
+    monkeypatch.setattr(
+        training_loop.torch.cuda,
+        "max_memory_reserved",
+        lambda *, device: calls.append(("reserved", device)) or 2048,
+    )
+
+    training_loop._reset_peak_memory_stats(device)
+    assert training_loop._peak_memory_stats(device) == (1024, 2048)
+    assert training_loop._peak_memory_stats(torch.device("cpu")) == (None, None)
+
+    assert calls == [
+        ("reset", device),
+        ("allocated", device),
+        ("reserved", device),
+    ]

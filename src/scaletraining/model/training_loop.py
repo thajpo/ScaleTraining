@@ -37,11 +37,29 @@ from scaletraining.util.wandb_utils import (
 )
 
 
-def _synchronize_for_timing(device: str) -> None:
+def _uses_cuda(device: torch.device) -> bool:
+    return device.type == "cuda" and torch.cuda.is_available()
+
+
+def _synchronize_for_timing(device: torch.device) -> None:
     """Wait for queued accelerator work only when measuring a CUDA window."""
 
-    if device.startswith("cuda") and torch.cuda.is_available():
-        torch.cuda.synchronize()
+    if _uses_cuda(device):
+        torch.cuda.synchronize(device=device)
+
+
+def _reset_peak_memory_stats(device: torch.device) -> None:
+    if _uses_cuda(device):
+        torch.cuda.reset_peak_memory_stats(device=device)
+
+
+def _peak_memory_stats(device: torch.device) -> tuple[int | None, int | None]:
+    if not _uses_cuda(device):
+        return None, None
+    return (
+        torch.cuda.max_memory_allocated(device=device),
+        torch.cuda.max_memory_reserved(device=device),
+    )
 
 
 def training_run(
@@ -81,14 +99,15 @@ def training_run(
         float(opt_secondary.param_groups[0]["lr"]) if opt_secondary is not None else 0.0
     )
 
-    device = str(getattr(cfg, "device_resolved", None) or cfg.device.device)
-    if device == "cuda" and not torch.cuda.is_available():
-        device = "cpu"
+    device = torch.device(
+        str(getattr(cfg, "device_resolved", None) or cfg.device.device)
+    )
+    if device.type == "cuda" and not torch.cuda.is_available():
+        device = torch.device("cpu")
     model.to(device)
     model.train()
 
-    if device.startswith("cuda") and torch.cuda.is_available():
-        torch.cuda.reset_peak_memory_stats()
+    _reset_peak_memory_stats(device)
 
     stats = {"train_loss": []}
     used_tokens = 0
@@ -144,7 +163,7 @@ def training_run(
 
             ctx = (
                 autocast(device_type="cuda", dtype=torch.bfloat16)
-                if (device == "cuda" and torch.cuda.is_available())
+                if _uses_cuda(device)
                 else contextlib.nullcontext()
             )
             with ctx:
@@ -218,11 +237,9 @@ def training_run(
                     else 0.0
                 )
                 tps = accum_token_count / elapsed if accum_token_count > 0 else 0.0
-                peak_memory_allocated = None
-                peak_memory_reserved = None
-                if device.startswith("cuda") and torch.cuda.is_available():
-                    peak_memory_allocated = torch.cuda.max_memory_allocated()
-                    peak_memory_reserved = torch.cuda.max_memory_reserved()
+                peak_memory_allocated, peak_memory_reserved = _peak_memory_stats(
+                    device
+                )
                 flops_used = estimate_flops(
                     tokens_used=used_tokens,
                     d_model=cfg.model.n_embed,
@@ -306,12 +323,13 @@ def training_run(
 
             if (
                 cfg.logging.debug_memory
-                and torch.cuda.is_available()
+                and _uses_cuda(device)
                 and (idx % 100 == 0)
             ):
                 try:
-                    peak_alloc = torch.cuda.max_memory_allocated() / (1024**2)
-                    peak_reserv = torch.cuda.max_memory_reserved() / (1024**2)
+                    peak_allocated, peak_reserved = _peak_memory_stats(device)
+                    peak_alloc = int(peak_allocated) / (1024**2)
+                    peak_reserv = int(peak_reserved) / (1024**2)
                     print(
                         f"peak MB after step: alloc={peak_alloc:.2f}, reserved={peak_reserv:.2f}"
                     )

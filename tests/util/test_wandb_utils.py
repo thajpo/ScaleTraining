@@ -32,6 +32,7 @@ class FakeWandb:
         self.metric_definitions = []
         self.logged = []
         self.finished = False
+        self.finish_exit_code = None
 
     def init(self, **kwargs):
         self.init_kwargs = kwargs
@@ -46,8 +47,9 @@ class FakeWandb:
     def log(self, payload):
         self.logged.append(payload)
 
-    def finish(self):
+    def finish(self, *, exit_code):
         self.finished = True
+        self.finish_exit_code = exit_code
         self.run = None
 
 
@@ -183,9 +185,10 @@ def test_disabled_unavailable_and_initialization_failure_states(monkeypatch):
 def test_finish_is_a_noop_without_a_run_and_finishes_an_active_run(monkeypatch):
     fake = FakeWandb()
     monkeypatch.setattr(wandb_utils, "wandb_sdk", fake)
-    wandb_utils.finish_wandb()
+    wandb_utils.finish_wandb(exit_code=0)
     assert fake.finished is False
 
     fake.run = FakeRun()
-    wandb_utils.finish_wandb()
+    wandb_utils.finish_wandb(exit_code=7)
     assert fake.finished is True
+    assert fake.finish_exit_code == 7
