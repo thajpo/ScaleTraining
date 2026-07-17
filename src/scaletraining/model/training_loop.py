@@ -8,6 +8,7 @@ Each function has a narrow purpose and explicit inputs/outputs.
 from __future__ import annotations
 
 import contextlib
+import time
 from typing import Dict, Optional
 
 import torch
@@ -36,6 +37,13 @@ from scaletraining.util.wandb_utils import (
 )
 
 
+def _synchronize_for_timing(device: str) -> None:
+    """Wait for queued accelerator work only when measuring a CUDA window."""
+
+    if device.startswith("cuda") and torch.cuda.is_available():
+        torch.cuda.synchronize()
+
+
 def training_run(
     cfg,
     model: nn.Module,
@@ -53,7 +61,7 @@ def training_run(
         train_loader: DataLoader yielding dicts with 'input_ids'.
         loss_fn: nn.CrossEntropyLoss(reduction='sum') for per-token normalization.
     Returns:
-        stats: dict with key 'train_loss' (list of averaged per-token losses per accumulation window).
+        stats: Averaged per-token training losses for each accumulation window.
     """
 
     matrix_params, other_params = split_model_matrix_params(
@@ -79,7 +87,7 @@ def training_run(
     model.to(device)
     model.train()
 
-    if torch.cuda.is_available():
+    if device.startswith("cuda") and torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats()
 
     stats = {"train_loss": []}
@@ -91,6 +99,8 @@ def training_run(
     )
     early_stop_min_delta = float(getattr(cfg.training, "early_stop_min_delta", 0.0))
     step_in_accum = 0
+    optimizer_step = 0
+    window_started_at: float | None = None
     accum_loss_sum = 0.0
     accum_token_count = 0
     last_eval_tokens = 0
@@ -127,6 +137,9 @@ def training_run(
     stop_training = False
     while used_tokens < cfg.training.max_train_tokens and not stop_training:
         for idx, batch in enumerate(train_loader):
+            if step_in_accum == 0:
+                _synchronize_for_timing(device)
+                window_started_at = time.perf_counter()
             input_ids = batch["input_ids"].to(device)
 
             ctx = (
@@ -162,10 +175,7 @@ def training_run(
             used_tokens += int(effective)
 
             if step_in_accum == cfg.training.accum_steps:
-                import time
-
-                _t0 = time.time()
-                nn.utils.clip_grad_norm_(
+                grad_norm = nn.utils.clip_grad_norm_(
                     model.parameters(), max_norm=cfg.training.grad_clip_norm
                 )
                 lr_scale = compute_lr_scale_tokens(
@@ -185,10 +195,20 @@ def training_run(
                 if opt_secondary is not None:
                     opt_secondary.step()
 
+                _synchronize_for_timing(device)
+                if window_started_at is None:  # pragma: no cover - loop invariant
+                    raise RuntimeError("Accumulation timer was not started")
+                elapsed = max(
+                    1e-6,
+                    time.perf_counter() - window_started_at,
+                )
+
                 opt_primary.zero_grad(set_to_none=True)
                 if opt_secondary is not None:
                     opt_secondary.zero_grad(set_to_none=True)
                 step_in_accum = 0
+                optimizer_step += 1
+                window_started_at = None
 
                 avg_loss = accum_loss_sum / max(1, accum_token_count)
                 stats["train_loss"].append(avg_loss)
@@ -197,8 +217,12 @@ def training_run(
                     if opt_primary is not None
                     else 0.0
                 )
-                elapsed = max(1e-6, time.time() - _t0)
                 tps = accum_token_count / elapsed if accum_token_count > 0 else 0.0
+                peak_memory_allocated = None
+                peak_memory_reserved = None
+                if device.startswith("cuda") and torch.cuda.is_available():
+                    peak_memory_allocated = torch.cuda.max_memory_allocated()
+                    peak_memory_reserved = torch.cuda.max_memory_reserved()
                 flops_used = estimate_flops(
                     tokens_used=used_tokens,
                     d_model=cfg.model.n_embed,
@@ -213,18 +237,24 @@ def training_run(
                 )
 
                 print(
-                    f"Tokens: {used_tokens:,}, Loss: {avg_loss:.4f}, LR: {current_lr:.6g}, tok/s: {tps:.0f}"
+                    f"Tokens: {used_tokens:,}, Loss: {avg_loss:.4f}, "
+                    f"LR: {current_lr:.6g}, tok/s: {tps:.0f}"
                 )
                 log_train_metrics(
                     used_tokens=used_tokens,
+                    optimizer_step=optimizer_step,
                     loss=avg_loss,
                     lr=current_lr,
+                    grad_norm_pre_clip=float(grad_norm),
                     throughput=tps,
                     flops_used=flops_used,
+                    peak_memory_allocated_bytes=peak_memory_allocated,
+                    peak_memory_reserved_bytes=peak_memory_reserved,
                 )
                 if cfg.moe.use_moe:
                     log_moe_metrics(
                         used_tokens=used_tokens,
+                        optimizer_step=optimizer_step,
                         metrics=build_moe_metrics(model),
                     )
 
@@ -236,7 +266,9 @@ def training_run(
                     and (used_tokens - tokens_at_best_loss) >= early_stop_tokens
                 ):
                     print(
-                        f"Early stopping: no train_loss improvement for {(used_tokens - tokens_at_best_loss):,} tokens; stopping run."
+                        "Early stopping: no train_loss improvement for "
+                        f"{(used_tokens - tokens_at_best_loss):,} tokens; "
+                        "stopping run."
                     )
                     stop_training = True
 
@@ -266,6 +298,7 @@ def training_run(
                     )
                     log_eval_metrics(
                         used_tokens=used_tokens,
+                        optimizer_step=optimizer_step,
                         val_loss=v_loss,
                         val_perplexity=v_ppl,
                     )

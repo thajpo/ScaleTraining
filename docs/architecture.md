@@ -18,10 +18,11 @@ Hydra config
 -> model construction
    -> dense transformer
    -> optional MoE blocks
--> token-budget training loop
--> W&B/run manifests/checkpoints
+-> allocate one run directory and initialize its manifest
+-> token-budget training loop with schema-versioned W&B metrics
+-> checkpoint, training result, and automatic run report
 -> perplexity and lm-eval style evaluation artifacts
--> run report evidence bundle
+-> refreshed run report evidence bundle
 -> qualitative generation from checkpoint
 ```
 
@@ -34,7 +35,8 @@ Hydra config
 - `src/scaletraining/data_processing/`: tokenization, packing, dataloading, and
   corpus utilities.
 - `src/scaletraining/model/`: transformer, MoE, and optimizer/model helpers.
-- `src/scaletraining/util/`: training loop, artifacts, eval helpers, and W&B
+- `src/scaletraining/reporting.py`: the shared run-report reader and renderer.
+- `src/scaletraining/util/`: artifacts, eval helpers, device support, and W&B
   integration.
 - `tests/`: focused tests across entrypoints, model behavior, data processing,
   training loop, inference, and utility contracts.
@@ -47,7 +49,12 @@ Hydra config
   tokenization/packing.
 - Dense and MoE models share the same training surface.
 - Evaluation and generation are separated from training for reproducibility.
-- Evaluation sidecars and run reports preserve metrics next to checkpoints.
+- W&B is the detailed metric history, with processed tokens as the shared
+  train/validation/MoE comparison axis.
+- One local run directory links the W&B identity, configuration fingerprint,
+  checkpoint, compact results, and automatically generated reports.
+- Evaluation sidecars refresh the reports next to the checkpoint instead of
+  requiring a separate reporting step.
 - The reviewer smoke path is CPU-only and uses local fixture text instead of
   HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,

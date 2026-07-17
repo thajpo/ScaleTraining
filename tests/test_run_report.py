@@ -19,7 +19,15 @@ def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
     run_dir = tmp_path / "run"
     _write_json(
         run_dir / "run_manifest.json",
-        {"fingerprint": "abc123", "training": {"seed": 13}},
+        {
+            "fingerprint": "abc123",
+            "status": "completed",
+            "tracking": {
+                "path": "entity/project/run-id",
+                "url": "https://wandb.ai/entity/project/runs/run-id",
+            },
+            "training": {"seed": 13},
+        },
     )
     _write_json(
         run_dir / "train_result.json",
@@ -44,11 +52,15 @@ def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
     json_path, md_path = run_report.write_reports(report, run_dir)
 
     assert report["summary"]["dataset_fingerprint"] == "abc123"
+    assert report["summary"]["status"] == "completed"
     assert report["summary"]["final_train_loss"] == 1.5
     assert report["summary"]["validation"]["tokens"] == 8
     assert report["artifacts"]["lm_eval_result"]["present"] is False
     assert json_path.exists()
     assert md_path.exists()
+    assert "[entity/project/run-id](https://wandb.ai/entity/project/runs/run-id)" in (
+        md_path.read_text()
+    )
 
     partial = run_report.build_report(tmp_path / "partial")
     assert partial["summary"]["checkpoint"] is None

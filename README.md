@@ -9,10 +9,10 @@ The repo is intentionally reviewable without a GPU. The default verification pat
 - Hydra-based experiment configuration with small overrideable config groups.
 - Explicit data preparation before training, with fingerprinted tokenized and packed artifacts.
 - Decoder-only transformer implementation with RoPE, tied embeddings, dense FFNs, and optional MoE blocks.
-- Token-budgeted training loop with gradient accumulation, learning-rate scheduling, validation hooks, W&B logging, and checkpoint manifests.
+- Token-budgeted training loop with gradient accumulation, learning-rate scheduling, validation hooks, token-indexed W&B metrics, and checkpoint manifests.
 - MoE routing metrics for entropy, load balance, expert usage, top-k gates, and auxiliary loss.
 - Checkpoint loading for validation perplexity, generation, and lm-evaluation-harness benchmarks, with JSON eval sidecars.
-- Run evidence bundles that combine training, checkpoint, validation, and benchmark artifacts.
+- Automatically generated run evidence bundles that link training, checkpoint, validation, benchmark, and W&B records.
 - CPU-safe tests and CI checks for config loading, public entrypoints, model contracts, and optimizer smoke coverage.
 
 ## Reviewer Entry Points
@@ -40,7 +40,7 @@ To exercise the full artifact path on CPU without network access:
 uv run python scripts/smoke_cpu_e2e.py
 ```
 
-The smoke command creates a temporary run directory, prepares local fixture data, trains a tiny model, evaluates validation perplexity, builds a run report, and verifies the expected sidecar artifacts.
+The smoke command creates a temporary run directory, prepares local fixture data, trains a tiny model, verifies that training automatically builds a run report, evaluates validation perplexity, and verifies that evaluation refreshes the same report.
 
 Slow optimizer convergence coverage is intentionally excluded from the default test run. To inspect it:
 
@@ -55,12 +55,12 @@ flowchart LR
     cfg["Hydra config"] --> prep["prepare_data"]
     prep --> tok["fingerprinted tokenized dataset"]
     tok --> pack["fingerprinted packed dataset"]
-    pack --> train["train"]
-    train --> ckpt["model.pt + run_manifest.json"]
+    pack --> train["train + W&B metrics"]
+    train --> ckpt["checkpoint + automatic run report"]
     ckpt --> ppl["run_evals eval_results.json"]
     ckpt --> gen["generate_from_pretrained"]
     ckpt --> bench["run_lm_eval lm_eval_results.json"]
-    ppl --> report["run_report.json + run_report.md"]
+    ppl --> report["refresh run_report.json + run_report.md"]
     bench --> report
 ```
 
@@ -74,7 +74,7 @@ uv run python -m compileall -q src scripts tests
 uv run python scripts/smoke_cpu_e2e.py
 ```
 
-The smoke run verifies that `prepare_data`, `train`, `run_evals`, and `run_report` work together on CPU and produce `run_manifest.json`, `train_result.json`, `eval_results.json`, `run_report.json`, and `run_report.md`.
+The smoke run verifies that `prepare_data`, `train`, and `run_evals` work together on CPU. Training produces `run_manifest.json`, `model.pt`, `model_config.json`, `train_result.json`, `run_report.json`, and `run_report.md`; evaluation adds `eval_results.json` and refreshes both reports automatically.
 
 ## Training Path
 
@@ -96,7 +96,7 @@ uv run python -m scaletraining.entrypoints.generate_from_pretrained
 # 5. Run lm-evaluation-harness tasks
 LM_EVAL_TASKS=hellaswag uv run python -m scaletraining.entrypoints.run_lm_eval
 
-# 6. Build a reviewer-facing evidence bundle
+# 6. Optionally refresh the automatically generated evidence bundle
 uv run python scripts/run_report.py --run-dir outputs/<run>
 ```
 
@@ -135,11 +135,20 @@ The report includes:
 
 After a run, the canonical evidence bundle is:
 
-- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, and checkpoint metadata.
+- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, lifecycle status, and W&B run identity.
 - `outputs/<run>/train_result.json`: final training result copied into the run directory.
 - `outputs/<run>/eval_results.json`: validation loss, perplexity, evaluated tokens, and batches.
 - `outputs/<run>/lm_eval_results.json`: lm-eval tasks and result payload when benchmarks are run.
 - `outputs/<run>/run_report.json` and `outputs/<run>/run_report.md`: machine-readable and reviewer-readable summaries.
+
+Training writes the initial reports automatically. Validation and lm-eval
+refresh them after adding their result sidecars. `scripts/run_report.py` remains
+available as an explicit rebuild command.
+
+W&B is the detailed time-series record. Tracking schema version 1 uses
+`progress/tokens` as the common comparison axis and groups measurements under
+`train/*`, `validation/*`, `performance/*`, `compute/*`, and `moe/*`. The local
+bundle intentionally does not duplicate that history.
 
 ## Wrap-Up Evidence
 
@@ -178,11 +187,11 @@ uv run python -m scaletraining.entrypoints.train model.n_layer=8 training.batch_
 ## Entrypoints
 
 - `prepare_data.py`: tokenizes and packs datasets offline.
-- `train.py`: trains until the token budget and writes checkpoint artifacts plus `train_result.json`.
-- `run_evals.py`: computes validation loss/perplexity from a checkpoint and writes `eval_results.json`.
+- `train.py`: trains until the token budget and automatically writes the checkpoint, manifest, result, and initial run reports.
+- `run_evals.py`: computes validation loss/perplexity, writes `eval_results.json`, and refreshes the run reports.
 - `generate_from_pretrained.py`: generates text from a trained checkpoint.
-- `run_lm_eval.py`: runs lm-evaluation-harness tasks against a checkpoint and writes `lm_eval_results.json`.
-- `scripts/run_report.py`: combines run sidecars into `run_report.json` and `run_report.md`.
+- `run_lm_eval.py`: runs lm-evaluation-harness tasks, writes `lm_eval_results.json`, and refreshes the run reports.
+- `scripts/run_report.py`: manually rebuilds `run_report.json` and `run_report.md` when needed.
 
 ## Advanced Corpus Builder
 

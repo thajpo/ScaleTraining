@@ -15,6 +15,10 @@ from .path_utils import _sanitize, config_fingerprint, get_cfg_subset
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def write_metadata(path: str, data: Dict[str, Any]) -> None:
     try:
         os.makedirs(path, exist_ok=True)
@@ -25,7 +29,7 @@ def write_metadata(path: str, data: Dict[str, Any]) -> None:
 
 
 def read_metadata(path: str) -> Dict[str, Any]:
-    """Used across codebase for validating the similarity of run config to existing data, tokenizers, etc"""
+    """Read metadata used to compare configs with existing data artifacts."""
     try:
         with open(os.path.join(path, "metadata.json"), "r", encoding="utf-8") as handle:
             return json.load(handle)
@@ -35,16 +39,18 @@ def read_metadata(path: str) -> Dict[str, Any]:
 
 
 def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = None) -> str:
-    """Used for saving the model configuration"""
+    """Write the stable configuration and identity for one training run."""
     os.makedirs(out_dir, exist_ok=True)
     training_cfg = cfg.training
     optimizer_cfg = cfg.optimizer
     model_cfg = cfg.model
     tokenizer_cfg = cfg.tokenizer
-    paths_cfg = cfg.paths
 
     manifest = {
-        "time": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "schema_version": 1,
+        "created_at": _utc_now(),
+        "run_id": Path(out_dir).name,
+        "status": "created",
         "dataset": get_cfg_subset(cfg),
         "optimizer": {
             "primary": optimizer_cfg.primary_optimizer,
@@ -54,6 +60,9 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
             "weight_decay": optimizer_cfg.weight_decay,
             "ns_iters": optimizer_cfg.ns_iters,
             "eps": optimizer_cfg.eps,
+            "lr_schedule": optimizer_cfg.lr_schedule,
+            "warmup_tokens": optimizer_cfg.warmup_tokens,
+            "min_lr_scale": optimizer_cfg.min_lr_scale,
         },
         "training": {
             "seed": training_cfg.seed,
@@ -62,17 +71,32 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
             "effective_batch_size": training_cfg.batch_size * training_cfg.accum_steps,
             "grad_clip_norm": training_cfg.grad_clip_norm,
             "logits_chunk_size": training_cfg.logits_chunk_size,
-            "device": cfg.device.device,
+            "max_train_tokens": training_cfg.max_train_tokens,
+            "max_val_tokens": training_cfg.max_val_tokens,
+            "eval_interval_tokens": training_cfg.eval_interval_tokens,
+            "device_requested": cfg.device.device,
+            "device_resolved": getattr(cfg, "device_resolved", None),
         },
         "transformer": {
             "n_layer": model_cfg.n_layer,
             "n_head": model_cfg.n_head,
             "n_embed": model_cfg.n_embed,
             "n_hidden": model_cfg.n_hidden,
+            "max_seq_len": model_cfg.max_seq_len,
             "activation": getattr(model_cfg, "activation", "relu"),
             "vocab_size": model_cfg.vocab_size,
             "UE_bias": model_cfg.UE_bias,
             "use_checkpoint": model_cfg.use_checkpoint,
+        },
+        "moe": {
+            "enabled": bool(cfg.moe.use_moe),
+            "n_layers": int(cfg.moe.moe_n_layers),
+            "n_experts": int(cfg.moe.moe_n_experts),
+            "top_k": int(cfg.moe.moe_top_k),
+            "n_hidden": int(cfg.moe.moe_n_hidden),
+            "load_balance_coefficient": float(cfg.moe.moe_lb_coef),
+            "router_temperature": float(cfg.moe.moe_router_temp),
+            "router_noise": float(cfg.moe.moe_router_noise),
         },
         "tokenizer": {
             "tokenizer_name": tokenizer_cfg.tokenizer_name,
@@ -81,7 +105,11 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
         "dataset_tag": _first_non_empty(tokenizer_cfg.dataset_tag),
         "fingerprint": config_fingerprint(cfg),
         "implementation": {
-            "optimizer": "baseline_adam" if optimizer_cfg.use_baseline_adam else optimizer_cfg.primary_optimizer,
+            "optimizer": (
+                "baseline_adam"
+                if optimizer_cfg.use_baseline_adam
+                else optimizer_cfg.primary_optimizer
+            ),
             "rope": {
                 "enabled": bool(getattr(model_cfg, "use_rope", True)),
                 "theta": getattr(getattr(model_cfg, "rope_config", {}), "theta", 10000),
@@ -96,6 +124,20 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
     return manifest_path
 
 
+def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
+    """Update lifecycle fields without rebuilding or discarding the manifest."""
+
+    manifest_path = Path(out_dir) / "run_manifest.json"
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Run manifest does not exist: {manifest_path}")
+    with manifest_path.open("r", encoding="utf-8") as handle:
+        manifest = json.load(handle)
+    manifest.update(updates)
+    with manifest_path.open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2, sort_keys=True)
+    return manifest_path
+
+
 def _first_non_empty(values):
     for value in values:
         if value not in (None, "", "null"):
@@ -103,26 +145,52 @@ def _first_non_empty(values):
     return None
 
 
-def save_model(model: torch.nn.Module, cfg: Any, out_root: Optional[str] = None) -> str:
-    paths_cfg = cfg.paths
-    tokenizer_cfg = cfg.tokenizer
+def _resolve_output_root(cfg: Any, out_root: Optional[str] = None) -> Path:
+    value = out_root or cfg.paths.output_dir
+    root = Path(str(value)).expanduser()
+    if not root.is_absolute():
+        cwd_candidate = Path.cwd() / root
+        root = (
+            cwd_candidate.resolve(strict=False)
+            if cwd_candidate.exists()
+            else (_REPO_ROOT / root).resolve(strict=False)
+        )
+    return root
 
-    out_root = out_root or paths_cfg.output_dir
-    if out_root and not os.path.isabs(out_root):
-        # Prefer cwd resolution if already absolute, otherwise anchor to repo root
-        cwd_candidate = Path.cwd() / out_root
-        if cwd_candidate.exists():
-            out_root = str(cwd_candidate.resolve(strict=False))
-        else:
-            out_root = str((_REPO_ROOT / out_root).resolve(strict=False))
+
+def create_run_dir(cfg: Any, out_root: Optional[str] = None) -> Path:
+    """Allocate the directory that all artifacts for one run will share."""
+
+    tokenizer_cfg = cfg.tokenizer
+    output_root = _resolve_output_root(cfg, out_root)
+    output_root.mkdir(parents=True, exist_ok=True)
     tag = _sanitize(_first_non_empty(tokenizer_cfg.dataset_tag) or "")
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     fingerprint = config_fingerprint(cfg)[:8]
     run_dir_name = "__".join(filter(None, [tag, f"v={fingerprint}", timestamp]))
-    run_dir = os.path.join(out_root, run_dir_name)
-    os.makedirs(run_dir, exist_ok=True)
+    run_dir = output_root / run_dir_name
+    suffix = 2
+    while run_dir.exists():
+        run_dir = output_root / f"{run_dir_name}__{suffix}"
+        suffix += 1
+    run_dir.mkdir()
+    return run_dir
 
-    model_path = os.path.join(run_dir, "model.pt")
+
+def save_model(
+    model: torch.nn.Module,
+    cfg: Any,
+    out_root: Optional[str] = None,
+    *,
+    run_dir: str | Path | None = None,
+) -> str:
+    """Save a checkpoint into an existing run, or allocate a run for callers."""
+
+    allocated_here = run_dir is None
+    run_path = create_run_dir(cfg, out_root) if run_dir is None else Path(run_dir)
+    run_path.mkdir(parents=True, exist_ok=True)
+
+    model_path = run_path / "model.pt"
     base_mod = getattr(model, "_orig_mod", model)
     state = base_mod.state_dict()
     torch.save({"state_dict": state}, model_path)
@@ -144,12 +212,13 @@ def save_model(model: torch.nn.Module, cfg: Any, out_root: Optional[str] = None)
         "use_rope": bool(getattr(model_cfg, "use_rope", True)),
         "use_checkpoint": bool(model_cfg.use_checkpoint),
     }
-    model_config_path = os.path.join(run_dir, "model_config.json")
-    with open(model_config_path, "w", encoding="utf-8") as f:
+    model_config_path = run_path / "model_config.json"
+    with model_config_path.open("w", encoding="utf-8") as f:
         json.dump(model_config, f, indent=2, sort_keys=True)
 
-    save_run_manifest(cfg, run_dir)
-    return run_dir
+    if allocated_here:
+        save_run_manifest(cfg, str(run_path), extra={"status": "completed"})
+    return str(run_path)
 
 
 def find_latest_model_path(output_root: str) -> Optional[str]:
@@ -195,7 +264,9 @@ def find_latest_model_path(output_root: str) -> Optional[str]:
 __all__ = [
     "write_metadata",
     "read_metadata",
+    "create_run_dir",
     "save_run_manifest",
+    "update_run_manifest",
     "save_model",
     "find_latest_model_path",
 ]
