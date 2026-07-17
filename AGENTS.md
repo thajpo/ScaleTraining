@@ -7,13 +7,17 @@ ML reliability infrastructure: explicit preprocessing, fingerprinted artifacts,
 token-budgeted training, checkpoint manifests, reproducible evaluation results,
 and reviewer-ready run evidence.
 
-## Planning Files
+## Change Workflow
 
-- Use `code_current.md` for implementation contracts.
-- Use `research_current.md` for experiment protocols and run outcomes.
-- Keep research history append-only once a run has executed.
-- Do not implement directly from brainstormed items; promote work to `Specd`
-  first.
+- Discuss complex or ambiguous changes before implementation.
+- Use GitHub issues for substantial approved work and experiment protocols.
+- Put implementation scope, non-goals, acceptance evidence, and risks in the
+  pull request description.
+- Keep repository documentation focused on durable architecture and behavior;
+  use Git, issues, and pull requests for planning history and closed work.
+- Preserve completed experiment evidence in generated run reports. Add a
+  curated research document only after real runs produce conclusions worth
+  retaining.
 
 ## Default Validation
 

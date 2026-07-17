@@ -216,4 +216,4 @@ Implemented and tested in the quick suite:
 - batch packing,
 - optimizer smoke behavior.
 
-Known future work is tracked in `code_current.md` and `research_current.md`. Those files are planning ledgers, not claims that every brainstormed experiment has already been completed.
+Future work is scoped in GitHub issues and pull requests when selected, keeping this README focused on implemented behavior.
