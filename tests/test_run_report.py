@@ -142,6 +142,7 @@ def test_run_report_accepts_moved_run_directory(tmp_path):
         {
             "checkpoint": provenance,
             "model_path": "model.pt",
+            "run_dir": str(original),
             "dataset_fingerprint": "abc123",
         },
     )
@@ -153,14 +154,37 @@ def test_run_report_accepts_moved_run_directory(tmp_path):
         },
     )
 
+    report = run_report.build_report(original)
+    run_report.write_reports(report, original)
+
     moved = tmp_path / "archive" / "run"
     moved.parent.mkdir(parents=True)
     shutil.move(original, moved)
 
-    report = run_report.build_report(moved)
+    persisted_report = json.loads((moved / "run_report.json").read_text())
+    markdown = (moved / "run_report.md").read_text()
 
-    assert report["summary"]["checkpoint"] == "model.pt"
-    assert report["run_manifest"]["checkpoint"]["original_path"] == str(checkpoint)
+    assert persisted_report["run_dir"] == "."
+    assert persisted_report["summary"]["checkpoint"] == "model.pt"
+    assert persisted_report["train_result"]["run_dir"] == "."
+    assert {
+        artifact["path"] for artifact in persisted_report["artifacts"].values()
+    } == {
+        "run_manifest.json",
+        "model.pt",
+        "model_config.json",
+        "train_result.json",
+        "eval_results.json",
+        "lm_eval_results.json",
+    }
+    assert persisted_report["run_manifest"]["checkpoint"]["original_path"] == str(
+        checkpoint
+    )
+    assert "- Run directory: `.`" in markdown
+    assert f"at `{original / 'model.pt'}`" not in markdown
+
+    rebuilt_report = run_report.build_report(moved)
+    assert rebuilt_report["summary"]["checkpoint"] == "model.pt"
 
 
 def test_run_report_rejects_checkpoint_digest_mismatch(tmp_path):
@@ -173,4 +197,63 @@ def test_run_report_rejects_checkpoint_digest_mismatch(tmp_path):
     checkpoint.write_bytes(b"different checkpoint")
 
     with pytest.raises(ValueError, match=r"checkpoint digest mismatch"):
+        run_report.build_report(run_dir)
+
+
+@pytest.mark.parametrize("artifact", ["eval_results.json", "lm_eval_results.json"])
+@pytest.mark.parametrize(
+    ("container", "field", "expected"),
+    [
+        ("checkpoint", None, "checkpoint.path"),
+        ("checkpoint", "path", "checkpoint.path"),
+        ("checkpoint", "sha256", "checkpoint.sha256"),
+        ("dataset", None, "dataset.fingerprint"),
+        ("dataset", "fingerprint", "dataset.fingerprint"),
+    ],
+)
+def test_digest_bearing_run_rejects_sidecar_missing_provenance(
+    tmp_path, artifact, container, field, expected
+):
+    run_dir = tmp_path / "run"
+    checkpoint = run_dir / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    provenance = build_checkpoint_provenance(checkpoint, run_dir)
+    _write_json(
+        run_dir / "run_manifest.json",
+        {"checkpoint": provenance, "fingerprint": "abc123"},
+    )
+    sidecar = {
+        "checkpoint": dict(provenance),
+        "dataset": {"fingerprint": "abc123"},
+    }
+    if field is None:
+        del sidecar[container]
+    else:
+        del sidecar[container][field]
+    _write_json(run_dir / artifact, sidecar)
+
+    with pytest.raises(
+        ValueError,
+        match=rf"{artifact} is missing required provenance:.*{expected}",
+    ):
+        run_report.build_report(run_dir)
+
+
+def test_digest_bearing_run_rejects_sidecar_without_canonical_fingerprint(tmp_path):
+    run_dir = tmp_path / "run"
+    checkpoint = run_dir / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    provenance = build_checkpoint_provenance(checkpoint, run_dir)
+    _write_json(run_dir / "run_manifest.json", {"checkpoint": provenance})
+    _write_json(
+        run_dir / "eval_results.json",
+        {
+            "checkpoint": provenance,
+            "dataset": {"fingerprint": "unbound-fingerprint"},
+        },
+    )
+
+    with pytest.raises(ValueError, match=r"canonical run evidence does not record one"):
         run_report.build_report(run_dir)

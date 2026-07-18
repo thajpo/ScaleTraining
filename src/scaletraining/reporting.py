@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,7 +35,7 @@ def _read_json(path: Path) -> dict[str, Any] | None:
 def _artifact_status(run_dir: Path, filename: str) -> dict[str, Any]:
     path = run_dir / filename
     return {
-        "path": str(path.resolve(strict=False)),
+        "path": filename,
         "present": path.exists(),
     }
 
@@ -81,6 +82,94 @@ def _checkpoint_digest(value: Any) -> str | None:
         return None
     digest = value.get("sha256")
     return str(digest) if digest is not None else None
+
+
+def _portable_payload(
+    run_path: Path,
+    payload: dict[str, Any] | None,
+    *,
+    train_result: bool = False,
+) -> dict[str, Any] | None:
+    if payload is None:
+        return None
+    portable = copy.deepcopy(payload)
+    expected_checkpoint = (run_path / ARTIFACT_FILES["checkpoint"]).resolve(
+        strict=False
+    )
+    checkpoint = portable.get("checkpoint")
+    if (
+        isinstance(checkpoint, dict)
+        and _resolved_checkpoint_path(run_path, checkpoint) == expected_checkpoint
+    ):
+        checkpoint["path"] = ARTIFACT_FILES["checkpoint"]
+    if train_result:
+        if "run_dir" in portable:
+            portable["run_dir"] = "."
+        model_path = portable.get("model_path")
+        if (
+            model_path is not None
+            and _resolved_checkpoint_path(run_path, model_path) == expected_checkpoint
+        ):
+            portable["model_path"] = ARTIFACT_FILES["checkpoint"]
+    return portable
+
+
+def _required_sidecar_provenance_problems(
+    manifest: dict[str, Any] | None,
+    train_result: dict[str, Any] | None,
+    eval_result: dict[str, Any] | None,
+    lm_eval_result: dict[str, Any] | None,
+) -> list[str]:
+    canonical_checkpoints = (
+        _checkpoint_value(manifest, "checkpoint"),
+        _train_checkpoint_value(train_result),
+    )
+    if not any(_checkpoint_digest(value) for value in canonical_checkpoints):
+        return []
+
+    problems = []
+    canonical_fingerprints = (
+        manifest.get("fingerprint") if manifest else None,
+        train_result.get("dataset_fingerprint") if train_result else None,
+    )
+    has_canonical_fingerprint = any(
+        value is not None and str(value).strip() != ""
+        for value in canonical_fingerprints
+    )
+    for source, payload in (
+        ("eval_results.json", eval_result),
+        ("lm_eval_results.json", lm_eval_result),
+    ):
+        if payload is None:
+            continue
+        checkpoint = payload.get("checkpoint")
+        dataset = payload.get("dataset")
+        required = {
+            "checkpoint.path": (
+                checkpoint.get("path") if isinstance(checkpoint, dict) else None
+            ),
+            "checkpoint.sha256": (
+                checkpoint.get("sha256") if isinstance(checkpoint, dict) else None
+            ),
+            "dataset.fingerprint": (
+                dataset.get("fingerprint") if isinstance(dataset, dict) else None
+            ),
+        }
+        missing = [
+            field
+            for field, value in required.items()
+            if value is None or str(value).strip() == ""
+        ]
+        if missing:
+            problems.append(
+                f"{source} is missing required provenance: {', '.join(missing)}"
+            )
+        elif not has_canonical_fingerprint:
+            problems.append(
+                f"{source} cannot match a dataset fingerprint because canonical "
+                "run evidence does not record one"
+            )
+    return problems
 
 
 def _validate_provenance(
@@ -135,7 +224,12 @@ def _validate_provenance(
     }
     fingerprint_mismatch = len(set(recorded_fingerprints.values())) > 1
 
-    problems = []
+    problems = _required_sidecar_provenance_problems(
+        manifest,
+        train_result,
+        eval_result,
+        lm_eval_result,
+    )
     if checkpoint_mismatches:
         details = ", ".join(
             f"{source} references {path}"
@@ -273,13 +367,15 @@ def build_report(run_dir: str | Path) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "created_at": _utc_now(),
-        "run_dir": str(run_path),
+        "run_dir": ".",
         "artifacts": artifacts,
         "summary": summary,
-        "run_manifest": manifest,
-        "train_result": train_result,
-        "eval_result": eval_result,
-        "lm_eval_result": lm_eval_result,
+        "run_manifest": _portable_payload(run_path, manifest),
+        "train_result": _portable_payload(
+            run_path, train_result, train_result=True
+        ),
+        "eval_result": _portable_payload(run_path, eval_result),
+        "lm_eval_result": _portable_payload(run_path, lm_eval_result),
     }
 
 
