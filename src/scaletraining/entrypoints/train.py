@@ -97,11 +97,15 @@ def run_training(cfg: DictConfig) -> float:
     wandb_exit_code = 0
 
     try:
-        save_run_manifest(
-            cfg,
-            str(run_dir),
-            extra={"status": "running", "tracking": tracking.to_dict()},
+        manifest_path = Path(
+            save_run_manifest(
+                cfg,
+                str(run_dir),
+                extra={"status": "running", "tracking": tracking.to_dict()},
+            )
         )
+        with manifest_path.open("r", encoding="utf-8") as handle:
+            dataset_fingerprint = json.load(handle)["fingerprint"]
         train_loader, val_loader = build_loaders(cfg, for_training=True)
 
         model = TransformerNetwork(cfg)
@@ -153,8 +157,21 @@ def run_training(cfg: DictConfig) -> float:
         final_train_loss = (
             float(stats["train_loss"][-1]) if stats.get("train_loss") else None
         )
+        checkpoint_path = (run_dir / "model.pt").resolve(strict=False)
+        training_progress = {
+            key: stats[key]
+            for key in (
+                "tokens_processed",
+                "tokens_applied",
+                "optimizer_steps",
+                "stop_reason",
+                "incomplete_accumulation_tokens",
+                "incomplete_accumulation_microbatches",
+            )
+        }
         job_result = {
             "final_train_loss": final_train_loss,
+            "dataset_fingerprint": dataset_fingerprint,
             "primary_optimizer": cfg.optimizer.primary_optimizer,
             "use_rope": bool(cfg.model.use_rope),
             "lr": float(cfg.optimizer.lr),
@@ -167,14 +184,21 @@ def run_training(cfg: DictConfig) -> float:
             "n_head": int(cfg.model.n_head),
             "n_embed": int(cfg.model.n_embed),
             "run_dir": str(run_dir),
-            "model_path": str(run_dir / "model.pt"),
+            "model_path": str(checkpoint_path),
+            **training_progress,
         }
         with (Path.cwd() / "result.json").open("w", encoding="utf-8") as handle:
             json.dump(job_result, handle, indent=2, sort_keys=True)
         with (run_dir / "train_result.json").open("w", encoding="utf-8") as handle:
             json.dump(job_result, handle, indent=2, sort_keys=True)
 
-        update_run_manifest(run_dir, status="completed", finished_at=_utc_now())
+        update_run_manifest(
+            run_dir,
+            status="completed",
+            finished_at=_utc_now(),
+            checkpoint={"path": str(checkpoint_path)},
+            training_progress=training_progress,
+        )
         json_report, markdown_report = refresh_run_report(run_dir)
         print(f"Run evidence written to: {json_report} and {markdown_report}")
         print("RESULT:", json.dumps(job_result))

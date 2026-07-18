@@ -1,3 +1,4 @@
+import contextlib
 import json
 from types import SimpleNamespace
 
@@ -5,6 +6,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from scaletraining.util import eval_utils
 from scaletraining.util.eval_utils import (
     evaluate_perplexity,
     evaluate_perplexity_stats,
@@ -77,6 +79,42 @@ def test_evaluate_perplexity_keeps_two_tuple_return(tmp_path):
     assert len(result) == 2
     assert stats["tokens"] == 2
     assert stats["batches"] == 1
+
+
+def test_evaluate_perplexity_uses_autocast_for_indexed_cuda(
+    tmp_path, monkeypatch
+):
+    calls = []
+    cfg = _cfg(tmp_path)
+    model = TinyEvalModel()
+
+    class DeviceIgnoringTensor:
+        def to(self, device):
+            calls.append(("to", device))
+            return torch.tensor([[1, 2, 3]])
+
+    @contextlib.contextmanager
+    def fake_autocast(**kwargs):
+        calls.append(("autocast", kwargs))
+        yield
+
+    monkeypatch.setattr(eval_utils, "resolve_device", lambda cfg: "cuda:1")
+    monkeypatch.setattr(eval_utils.torch.cuda, "is_available", lambda: True)
+    monkeypatch.setattr(eval_utils, "autocast", fake_autocast)
+
+    stats = evaluate_perplexity_stats(
+        model,
+        [{"input_ids": DeviceIgnoringTensor()}],
+        cfg,
+        nn.CrossEntropyLoss(reduction="sum"),
+        max_batches=1,
+    )
+
+    assert stats["tokens"] == 2
+    assert calls == [
+        ("to", "cuda:1"),
+        ("autocast", {"device_type": "cuda", "dtype": torch.bfloat16}),
+    ]
 
 
 def test_write_eval_result_defaults_next_to_checkpoint(tmp_path):

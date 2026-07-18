@@ -68,13 +68,7 @@ def _cfg():
     )
 
 
-def test_accumulation_timing_and_gradient_norm_cover_the_complete_window(monkeypatch):
-    events = []
-    captured = []
-    model = TinyModel(events)
-    optimizer = RecordingOptimizer(model.weight, events)
-    clock = iter([10.0, 12.0])
-
+def _patch_training_dependencies(monkeypatch, model, optimizer):
     monkeypatch.setattr(
         training_loop,
         "split_model_matrix_params",
@@ -104,6 +98,22 @@ def test_accumulation_timing_and_gradient_norm_cover_the_complete_window(monkeyp
         "compute_loss_sum",
         lambda model, hidden, targets, chunk_size, loss_fn: hidden.sum(),
     )
+    monkeypatch.setattr(
+        training_loop.nn.utils,
+        "clip_grad_norm_",
+        lambda *args, **kwargs: torch.tensor(1.0),
+    )
+    monkeypatch.setattr(training_loop, "log_train_metrics", lambda **kwargs: None)
+
+
+def test_accumulation_timing_and_gradient_norm_cover_the_complete_window(monkeypatch):
+    events = []
+    captured = []
+    model = TinyModel(events)
+    optimizer = RecordingOptimizer(model.weight, events)
+    clock = iter([10.0, 11.0, 20.0, 21.0])
+
+    _patch_training_dependencies(monkeypatch, model, optimizer)
 
     def clip(*args, **kwargs):
         events.append("clip")
@@ -121,26 +131,40 @@ def test_accumulation_timing_and_gradient_norm_cover_the_complete_window(monkeyp
         lambda **kwargs: captured.append(kwargs),
     )
 
-    batches = [
-        {"input_ids": torch.tensor([[1, 2]])},
-        {"input_ids": torch.tensor([[3, 4]])},
-    ]
+    def batches():
+        events.append("fetch")
+        yield {"input_ids": torch.tensor([[1, 2]])}
+        events.append("fetch")
+        yield {"input_ids": torch.tensor([[3, 4]])}
+
     stats = training_loop.training_run(
         _cfg(),
         model,
-        batches,
+        batches(),
         loss_fn=torch.nn.CrossEntropyLoss(reduction="sum"),
     )
 
     assert events == [
+        "fetch",
         "clock",
         "forward",
+        "clock",
+        "fetch",
+        "clock",
         "forward",
         "clip",
         "optimizer_step",
         "clock",
     ]
-    assert stats == {"train_loss": [0.5]}
+    assert stats == {
+        "train_loss": [0.5],
+        "tokens_processed": 4,
+        "tokens_applied": 4,
+        "optimizer_steps": 1,
+        "stop_reason": "token_budget_reached",
+        "incomplete_accumulation_tokens": 0,
+        "incomplete_accumulation_microbatches": 0,
+    }
     assert captured == [
         {
             "used_tokens": 4,
@@ -200,3 +224,76 @@ def test_peak_memory_operations_use_the_selected_cuda_device(monkeypatch):
         ("allocated", device),
         ("reserved", device),
     ]
+
+
+def test_token_budget_reports_unapplied_partial_accumulation(monkeypatch):
+    events = []
+    model = TinyModel(events)
+    optimizer = RecordingOptimizer(model.weight, events)
+    cfg = _cfg()
+    cfg.training.max_train_tokens = 2
+    _patch_training_dependencies(monkeypatch, model, optimizer)
+
+    stats = training_loop.training_run(
+        cfg,
+        model,
+        [{"input_ids": torch.tensor([[1, 2]])}],
+        loss_fn=torch.nn.CrossEntropyLoss(reduction="sum"),
+    )
+
+    assert stats["tokens_processed"] == 2
+    assert stats["tokens_applied"] == 0
+    assert stats["optimizer_steps"] == 0
+    assert stats["stop_reason"] == "token_budget_reached"
+    assert stats["incomplete_accumulation_tokens"] == 2
+    assert stats["incomplete_accumulation_microbatches"] == 1
+
+
+def test_early_stopping_reports_applied_progress(monkeypatch):
+    events = []
+    model = TinyModel(events)
+    optimizer = RecordingOptimizer(model.weight, events)
+    cfg = _cfg()
+    cfg.training.max_train_tokens = 10
+    cfg.training.accum_steps = 1
+    cfg.training.early_stop_tokens_without_improvement = 2
+    _patch_training_dependencies(monkeypatch, model, optimizer)
+
+    stats = training_loop.training_run(
+        cfg,
+        model,
+        [
+            {"input_ids": torch.tensor([[1, 2]])},
+            {"input_ids": torch.tensor([[3, 4]])},
+        ],
+        loss_fn=torch.nn.CrossEntropyLoss(reduction="sum"),
+    )
+
+    assert stats["tokens_processed"] == 4
+    assert stats["tokens_applied"] == 4
+    assert stats["optimizer_steps"] == 2
+    assert stats["stop_reason"] == "early_stopping"
+    assert stats["incomplete_accumulation_tokens"] == 0
+
+
+def test_data_exhaustion_reports_unapplied_partial_accumulation(monkeypatch):
+    events = []
+    model = TinyModel(events)
+    optimizer = RecordingOptimizer(model.weight, events)
+    cfg = _cfg()
+    cfg.training.max_train_tokens = 10
+    _patch_training_dependencies(monkeypatch, model, optimizer)
+    batches = iter([{"input_ids": torch.tensor([[1, 2]])}])
+
+    stats = training_loop.training_run(
+        cfg,
+        model,
+        batches,
+        loss_fn=torch.nn.CrossEntropyLoss(reduction="sum"),
+    )
+
+    assert stats["tokens_processed"] == 2
+    assert stats["tokens_applied"] == 0
+    assert stats["optimizer_steps"] == 0
+    assert stats["stop_reason"] == "data_exhausted"
+    assert stats["incomplete_accumulation_tokens"] == 2

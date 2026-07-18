@@ -70,8 +70,15 @@ def test_training_error_keeps_original_exception_and_finalizes_evidence(
 
     def save_manifest(cfg, out_dir, extra):
         (run_dir / "run_manifest.json").write_text(
-            json.dumps({"status": extra["status"], "tracking": extra["tracking"]})
+            json.dumps(
+                {
+                    "status": extra["status"],
+                    "tracking": extra["tracking"],
+                    "fingerprint": "fixture-fingerprint",
+                }
+            )
         )
+        return run_dir / "run_manifest.json"
 
     monkeypatch.setattr(train, "save_run_manifest", save_manifest)
     monkeypatch.setattr(
@@ -124,6 +131,7 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
     run_dir = tmp_path / "outputs" / "run"
     run_dir.mkdir(parents=True)
     finished = []
+    manifest_updates = []
     model = SimpleNamespace(
         token_embedding=SimpleNamespace(num_embeddings=16),
     )
@@ -151,7 +159,12 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
             to_dict=lambda: {"provider": "wandb", "state": "disabled"}
         ),
     )
-    monkeypatch.setattr(train, "save_run_manifest", lambda *args, **kwargs: None)
+    def save_manifest(*args, **kwargs):
+        path = run_dir / "run_manifest.json"
+        path.write_text(json.dumps({"fingerprint": "fixture-fingerprint"}))
+        return path
+
+    monkeypatch.setattr(train, "save_run_manifest", save_manifest)
     monkeypatch.setattr(train, "build_loaders", lambda *args, **kwargs: ([], []))
     monkeypatch.setattr(train, "TransformerNetwork", lambda cfg: model)
     monkeypatch.setattr(train, "count_parameters", lambda model: (16, 16))
@@ -159,10 +172,22 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
     monkeypatch.setattr(
         train,
         "training_run",
-        lambda *args, **kwargs: {"train_loss": [0.25]},
+        lambda *args, **kwargs: {
+            "train_loss": [0.25],
+            "tokens_processed": 2,
+            "tokens_applied": 2,
+            "optimizer_steps": 1,
+            "stop_reason": "token_budget_reached",
+            "incomplete_accumulation_tokens": 0,
+            "incomplete_accumulation_microbatches": 0,
+        },
     )
     monkeypatch.setattr(train, "save_model", lambda *args, **kwargs: str(run_dir))
-    monkeypatch.setattr(train, "update_run_manifest", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        train,
+        "update_run_manifest",
+        lambda *args, **kwargs: manifest_updates.append(kwargs),
+    )
     monkeypatch.setattr(
         train,
         "refresh_run_report",
@@ -176,3 +201,10 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
 
     assert train.run_training(cfg) == 0.25
     assert finished == [0]
+    result = json.loads((run_dir / "train_result.json").read_text())
+    assert result["tokens_processed"] == 2
+    assert result["tokens_applied"] == 2
+    assert result["optimizer_steps"] == 1
+    assert result["stop_reason"] == "token_budget_reached"
+    assert result["dataset_fingerprint"]
+    assert manifest_updates[0]["training_progress"]["tokens_processed"] == 2

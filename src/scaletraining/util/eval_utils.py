@@ -12,7 +12,7 @@ from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
 from scaletraining.model.model import TransformerNetwork
 from scaletraining.util import find_latest_model_path
-from scaletraining.util.device import resolve_device
+from scaletraining.util.device import resolve_device, uses_cuda
 from scaletraining.util.path_utils import config_fingerprint, get_cfg_subset
 
 
@@ -47,7 +47,7 @@ def evaluate_perplexity_stats(
         input_ids = batch["input_ids"].to(device)
         context = (
             autocast(device_type="cuda", dtype=torch.bfloat16)
-            if (device == "cuda" and torch.cuda.is_available())
+            if uses_cuda(device)
             else contextlib.nullcontext()
         )
         with context:

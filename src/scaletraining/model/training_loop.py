@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader
 from omegaconf import open_dict
 
 from scaletraining.util.eval_utils import evaluate_perplexity
+from scaletraining.util.device import uses_cuda
 from scaletraining.util.training_utils import (
     apply_moe_schedules,
     build_optimizers,
@@ -37,24 +38,20 @@ from scaletraining.util.wandb_utils import (
 )
 
 
-def _uses_cuda(device: torch.device) -> bool:
-    return device.type == "cuda" and torch.cuda.is_available()
-
-
 def _synchronize_for_timing(device: torch.device) -> None:
     """Wait for queued accelerator work only when measuring a CUDA window."""
 
-    if _uses_cuda(device):
+    if uses_cuda(device):
         torch.cuda.synchronize(device=device)
 
 
 def _reset_peak_memory_stats(device: torch.device) -> None:
-    if _uses_cuda(device):
+    if uses_cuda(device):
         torch.cuda.reset_peak_memory_stats(device=device)
 
 
 def _peak_memory_stats(device: torch.device) -> tuple[int | None, int | None]:
-    if not _uses_cuda(device):
+    if not uses_cuda(device):
         return None, None
     return (
         torch.cuda.max_memory_allocated(device=device),
@@ -69,7 +66,7 @@ def training_run(
     *,
     loss_fn: nn.Module,
     val_loader: Optional[DataLoader] = None,
-) -> Dict[str, list]:
+) -> Dict[str, Any]:
     """Functional training loop until reaching token budget.
 
     Args:
@@ -79,7 +76,7 @@ def training_run(
         train_loader: DataLoader yielding dicts with 'input_ids'.
         loss_fn: nn.CrossEntropyLoss(reduction='sum') for per-token normalization.
     Returns:
-        stats: Averaged per-token training losses for each accumulation window.
+        stats: Per-window losses and terminal training progress.
     """
 
     matrix_params, other_params = split_model_matrix_params(
@@ -111,6 +108,7 @@ def training_run(
 
     stats = {"train_loss": []}
     used_tokens = 0
+    applied_tokens = 0
     best_train_loss = float("inf")
     tokens_at_best_loss = 0
     early_stop_tokens = max(
@@ -119,7 +117,7 @@ def training_run(
     early_stop_min_delta = float(getattr(cfg.training, "early_stop_min_delta", 0.0))
     step_in_accum = 0
     optimizer_step = 0
-    window_started_at: float | None = None
+    window_compute_seconds = 0.0
     accum_loss_sum = 0.0
     accum_token_count = 0
     last_eval_tokens = 0
@@ -154,16 +152,22 @@ def training_run(
         return metrics
 
     stop_training = False
+    stop_reason = (
+        "token_budget_reached"
+        if cfg.training.max_train_tokens <= 0
+        else None
+    )
     while used_tokens < cfg.training.max_train_tokens and not stop_training:
+        batches_this_pass = 0
         for idx, batch in enumerate(train_loader):
-            if step_in_accum == 0:
-                _synchronize_for_timing(device)
-                window_started_at = time.perf_counter()
+            batches_this_pass += 1
+            _synchronize_for_timing(device)
+            segment_started_at = time.perf_counter()
             input_ids = batch["input_ids"].to(device)
 
             ctx = (
                 autocast(device_type="cuda", dtype=torch.bfloat16)
-                if _uses_cuda(device)
+                if uses_cuda(device)
                 else contextlib.nullcontext()
             )
             with ctx:
@@ -214,20 +218,18 @@ def training_run(
                 if opt_secondary is not None:
                     opt_secondary.step()
 
-                _synchronize_for_timing(device)
-                if window_started_at is None:  # pragma: no cover - loop invariant
-                    raise RuntimeError("Accumulation timer was not started")
-                elapsed = max(
-                    1e-6,
-                    time.perf_counter() - window_started_at,
-                )
-
                 opt_primary.zero_grad(set_to_none=True)
                 if opt_secondary is not None:
                     opt_secondary.zero_grad(set_to_none=True)
+
+                _synchronize_for_timing(device)
+                window_compute_seconds += time.perf_counter() - segment_started_at
+                elapsed = max(1e-6, window_compute_seconds)
+
+                applied_tokens += accum_token_count
                 step_in_accum = 0
                 optimizer_step += 1
-                window_started_at = None
+                window_compute_seconds = 0.0
 
                 avg_loss = accum_loss_sum / max(1, accum_token_count)
                 stats["train_loss"].append(avg_loss)
@@ -288,6 +290,7 @@ def training_run(
                         "stopping run."
                     )
                     stop_training = True
+                    stop_reason = "early_stopping"
 
                 accum_loss_sum = 0.0
                 accum_token_count = 0
@@ -320,10 +323,13 @@ def training_run(
                         val_perplexity=v_ppl,
                     )
                     last_eval_tokens = used_tokens
+            else:
+                _synchronize_for_timing(device)
+                window_compute_seconds += time.perf_counter() - segment_started_at
 
             if (
                 cfg.logging.debug_memory
-                and _uses_cuda(device)
+                and uses_cuda(device)
                 and (idx % 100 == 0)
             ):
                 try:
@@ -338,6 +344,23 @@ def training_run(
 
             if used_tokens >= cfg.training.max_train_tokens:
                 stop_training = True
+                stop_reason = "token_budget_reached"
                 break
 
+        if stop_training:
+            break
+        if batches_this_pass == 0:
+            stop_reason = "data_exhausted"
+            break
+
+    stats.update(
+        {
+            "tokens_processed": used_tokens,
+            "tokens_applied": applied_tokens,
+            "optimizer_steps": optimizer_step,
+            "stop_reason": stop_reason,
+            "incomplete_accumulation_tokens": accum_token_count,
+            "incomplete_accumulation_microbatches": step_in_accum,
+        }
+    )
     return stats
