@@ -171,7 +171,7 @@ def run_training(cfg: DictConfig) -> float:
                 "incomplete_accumulation_microbatches",
             )
         }
-        job_result = {
+        result = {
             "final_train_loss": final_train_loss,
             "dataset_fingerprint": dataset_fingerprint,
             "primary_optimizer": cfg.optimizer.primary_optimizer,
@@ -185,15 +185,20 @@ def run_training(cfg: DictConfig) -> float:
             "n_layer": int(cfg.model.n_layer),
             "n_head": int(cfg.model.n_head),
             "n_embed": int(cfg.model.n_embed),
-            "run_dir": str(run_dir),
+            "run_dir": ".",
             "model_path": checkpoint["path"],
             "checkpoint": checkpoint,
             **training_progress,
         }
+        job_result = {
+            **result,
+            "run_dir": str(run_dir.resolve(strict=False)),
+            "model_path": str(checkpoint_path),
+        }
         with (Path.cwd() / "result.json").open("w", encoding="utf-8") as handle:
             json.dump(job_result, handle, indent=2, sort_keys=True)
         with (run_dir / "train_result.json").open("w", encoding="utf-8") as handle:
-            json.dump(job_result, handle, indent=2, sort_keys=True)
+            json.dump(result, handle, indent=2, sort_keys=True)
 
         update_run_manifest(
             run_dir,

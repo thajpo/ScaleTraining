@@ -166,7 +166,11 @@ validates a proposed sidecar against the manifest, checkpoint contents, and
 existing evidence before atomically replacing the prior result. A custom
 `eval.output_dir` must therefore be the checkpoint-owning run directory; the
 default is the checkpoint's parent. Portable reports use `.` and run-relative
-artifact paths, while `original_path` remains informational provenance.
+artifact paths; nested evaluation output directories are normalized the same
+way. `original_path` and `original_output_dir` remain informational provenance.
+The run-local `train_result.json` likewise resolves paths from its own directory,
+while Hydra's job-level `result.json` uses absolute `run_dir` and `model_path`
+values so aggregation consumers can open them directly.
 
 W&B is the detailed time-series record. Tracking schema version 1 uses
 `progress/tokens` as the common comparison axis and also records

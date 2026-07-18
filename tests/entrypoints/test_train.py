@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -206,13 +207,18 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
     assert train.run_training(cfg) == 0.25
     assert finished == [0]
     result = json.loads((run_dir / "train_result.json").read_text())
+    job_result = json.loads((tmp_path / "result.json").read_text())
     assert result["tokens_processed"] == 2
     assert result["tokens_applied"] == 2
     assert result["optimizer_steps"] == 1
     assert result["stop_reason"] == "token_budget_reached"
     assert result["dataset_fingerprint"]
+    assert result["run_dir"] == "."
     assert result["model_path"] == "model.pt"
     assert result["checkpoint"]["path"] == "model.pt"
     assert result["checkpoint"]["original_path"] == str(run_dir / "model.pt")
+    assert job_result["run_dir"] == str(run_dir)
+    assert job_result["model_path"] == str(run_dir / "model.pt")
+    assert Path(job_result["model_path"]).is_file()
     assert manifest_updates[0]["training_progress"]["tokens_processed"] == 2
     assert manifest_updates[0]["checkpoint"] == result["checkpoint"]

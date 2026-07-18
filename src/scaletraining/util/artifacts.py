@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -29,6 +30,27 @@ def checkpoint_sha256(path: str | Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _write_run_manifest(path: Path, manifest: dict[str, Any]) -> None:
+    """Durably replace a manifest without truncating its valid predecessor."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    file_descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent,
+        prefix=f".{path.name}.",
+        suffix=".tmp",
+    )
+    temporary_path = Path(temporary_name)
+    try:
+        with os.fdopen(file_descriptor, "w", encoding="utf-8") as handle:
+            json.dump(manifest, handle, indent=2, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
 
 
 def build_checkpoint_provenance(
@@ -153,10 +175,9 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
     }
     if extra:
         manifest.update(extra)
-    manifest_path = os.path.join(out_dir, "run_manifest.json")
-    with open(manifest_path, "w", encoding="utf-8") as handle:
-        json.dump(manifest, handle, indent=2, sort_keys=True)
-    return manifest_path
+    manifest_path = Path(out_dir) / "run_manifest.json"
+    _write_run_manifest(manifest_path, manifest)
+    return str(manifest_path)
 
 
 def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
@@ -168,8 +189,7 @@ def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
     with manifest_path.open("r", encoding="utf-8") as handle:
         manifest = json.load(handle)
     manifest.update(updates)
-    with manifest_path.open("w", encoding="utf-8") as handle:
-        json.dump(manifest, handle, indent=2, sort_keys=True)
+    _write_run_manifest(manifest_path, manifest)
     return manifest_path
 
 

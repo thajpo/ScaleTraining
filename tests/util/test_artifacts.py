@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 import torch
 from omegaconf import OmegaConf
 
@@ -109,6 +110,37 @@ def test_existing_run_directory_is_reused_for_all_checkpoint_artifacts(tmp_path)
     assert manifest["training"]["device_resolved"] == "cpu"
     assert manifest["transformer"]["max_seq_len"] == 4
     assert manifest["moe"]["enabled"] is False
+
+
+def test_failed_manifest_serialization_preserves_previous_manifest(tmp_path):
+    cfg = _cfg(tmp_path)
+    run_dir = create_run_dir(cfg)
+    save_run_manifest(cfg, str(run_dir))
+    original = (run_dir / "run_manifest.json").read_bytes()
+
+    with pytest.raises(TypeError):
+        update_run_manifest(run_dir, unserializable=object())
+
+    assert (run_dir / "run_manifest.json").read_bytes() == original
+    assert not list(run_dir.glob(".run_manifest.json.*.tmp"))
+
+
+def test_failed_manifest_replace_preserves_previous_manifest(tmp_path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    run_dir = create_run_dir(cfg)
+    save_run_manifest(cfg, str(run_dir))
+    original = (run_dir / "run_manifest.json").read_bytes()
+
+    def fail_replace(source, destination):
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr("scaletraining.util.artifacts.os.replace", fail_replace)
+
+    with pytest.raises(OSError, match="simulated replace failure"):
+        update_run_manifest(run_dir, status="completed")
+
+    assert (run_dir / "run_manifest.json").read_bytes() == original
+    assert not list(run_dir.glob(".run_manifest.json.*.tmp"))
 
 
 def test_manifest_preserves_requested_cuda_after_cpu_fallback(tmp_path, monkeypatch):
