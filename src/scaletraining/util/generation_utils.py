@@ -45,7 +45,7 @@ def generate_autoregressive(
     Args:
         model: nn.Module with `forward(input_ids)` -> logits [B, T, V].
         tokenizer: HuggingFace tokenizer used to encode/decode text.
-        device: 'cuda' or 'cpu'.
+        device: PyTorch device string such as ``cpu``, ``cuda``, or ``cuda:1``.
         prompt: seed text to condition on.
         max_new_tokens: number of tokens to sample.
         temperature: >0; divides logits before softmax.

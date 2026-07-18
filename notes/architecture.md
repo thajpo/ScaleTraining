@@ -1,8 +1,8 @@
 # Architecture Notes
 
 ## Purpose
-This document captures the current architecture of the ScaleTraining repo and the intended target architecture
-after cleanup/unification. It is meant to be a shared reference for design decisions and review.
+This document captures the current ScaleTraining architecture and its closeout
+boundaries. It is a shared reference for design decisions and review.
 
 ## Current Architecture (As-Is)
 
@@ -11,26 +11,34 @@ after cleanup/unification. It is meant to be a shared reference for design decis
 2) Data pipeline produces tokenized and optionally packed datasets. Packing means concatenating token sequences
    and slicing them into fixed-length blocks (max_seq_len) for efficient causal LM training.
 3) Model is constructed from config (dense or MoE Transformer).
-4) Training loop iterates until token budget, logs metrics, and saves artifacts.
-5) Evaluation runs on checkpoints (currently in flux).
+4) Training allocates one evidence directory, records its tracking/lifecycle
+   manifest, iterates until the token budget, and writes the checkpoint,
+   terminal result, and initial reports.
+5) Perplexity and lm-eval entrypoints write provenance-checked sidecars beside
+   the checkpoint and refresh the reports.
 6) Generation can run on a checkpoint for qualitative inspection.
 
 Entrypoints map to steps as follows:
 - `prepare_data.py` handles step (2) explicitly (offline prep).
 - `train.py` handles steps (1) through (4) and requires preprocessed artifacts.
-- `run_evals.py` is meant to handle step (5).
+- `run_evals.py` and `run_lm_eval.py` handle step (5).
 - `generate_from_pretrained.py` handles step (6).
 
 ### Entrypoints
 - `src/scaletraining/entrypoints/train.py`
-  - Loads config, prepares tokenizer, builds loaders, constructs model, runs training loop, saves model.
+  - Loads config, prepares tokenizer, creates the run directory and manifest,
+    initializes W&B, builds loaders and the model, runs training, then saves the
+    checkpoint, terminal progress, and reports.
 - `src/scaletraining/entrypoints/prepare_data.py`
   - Tokenizes and packs datasets based on config. Supports multiple datasets.
   - Note: tokenization loads datasets eagerly via `datasets.load_dataset` (not streaming), so very large HF
     datasets are not practical here; streaming is supported in the mixed-corpus builder path.
 - `src/scaletraining/entrypoints/run_evals.py`
-  - Intended to run evals on a pretrained checkpoint; currently a GSM8K stub (tokenizes + builds a loader but
-    does not compute a real score).
+  - Loads a checkpoint and the shared validation loader, computes per-token loss
+    and perplexity, writes `eval_results.json`, and refreshes the run report.
+- `src/scaletraining/entrypoints/run_lm_eval.py`
+  - Adapts a checkpoint to lm-evaluation-harness, writes
+    `lm_eval_results.json`, and refreshes the run report.
 - `src/scaletraining/entrypoints/generate_from_pretrained.py`
   - Loads checkpoint + tokenizer and generates text from a prompt.
 
@@ -57,16 +65,36 @@ Entrypoints map to steps as follows:
 - `training_loop.py` handles token-based training until max token budget.
 - Loss is computed as summed CE, normalized per token (standard for stable token-based logging and scheduling).
 - Optimizers: Muon/AdaMuon + AdamW split for matrices vs other params.
-- Logs to W&B via `wandb_utils.py`.
-- Saves model + run manifest via `artifacts.py`.
+- W&B schema v1 uses processed tokens as the common train, validation,
+  performance, compute, and MoE axis. Throughput times the synchronized
+  accumulation compute window; FLOPs are estimated, and CUDA peak-memory calls
+  target the resolved device.
+- Terminal progress separates processed tokens from tokens applied in complete
+  optimizer windows and records optimizer steps, stop reason, and unfinished
+  accumulation.
+- `artifacts.py` creates the shared run directory before training and records
+  requested/resolved device provenance, lifecycle, W&B identity, and checkpoint
+  identity.
 
 ### Evaluation
 - `eval_utils.py` provides perplexity evaluation and checkpoint loading helpers.
-- `run_evals.py` is not aligned with `build_loaders` or benchmark suite goals.
+- `run_evals.py` uses `build_loaders(..., for_training=False)` for validation
+  perplexity; `run_lm_eval.py` handles standardized benchmark tasks.
+- Sidecars carry a run-relative `model.pt` path, SHA-256 digest, original path,
+  and dataset fingerprint. A proposed result is checked against the manifest,
+  checkpoint bytes, and existing sidecars before atomic replacement.
+- Evaluation output defaults to the checkpoint parent. Any explicit
+  `eval.output_dir` must be that checkpoint-owning run directory.
 
 ### Artifacts
 - Tokenized/packed datasets: fingerprinted paths via `path_utils.py`.
-- Model checkpoints: saved under `outputs/` with run manifests.
+- A run directory under `outputs/` contains `run_manifest.json`, `model.pt`,
+  `model_config.json`, `train_result.json`, optional evaluation sidecars, and
+  automatically refreshed JSON/Markdown reports.
+- Manifests transition from `running` to `completed`, or to `failed` with error
+  details. Reports use `.` and run-relative artifact paths so a complete bundle
+  remains verifiable after moving; absolute `original_path` fields are only
+  provenance.
 
 #### Hashing / fingerprinting contracts
 - Fingerprints are computed in `path_utils.config_fingerprint` from a subset of config fields
@@ -83,42 +111,48 @@ Entrypoints map to steps as follows:
 - What cannot be reliably fingerprinted today: code changes, dataset revisions, streaming offsets,
   tokenizer training randomness, and any implicit preprocessing behavior not represented in config.
 
-## Current Pain Points
-The largest pain point is too many options without a clear default (especially in tokenization/datasets).
-We should simplify the default path while keeping advanced options available.
+## Current Tradeoffs
+
+The standard prepare → train → evaluate → report path is explicit and tested.
+The remaining tradeoffs are:
+
 - Two parallel data paths:
   - Tokenize+pack flow vs mixed-corpus builder scripts.
-- Evals are drifting:
-  - ARC was removed; current GSM8K eval is stubby and not integrated.
-- Mixed config access patterns:
-  - Most entrypoints use `load_project_config` (structured, schema-checked), but evals flatten configs into a
-    plain dict for convenience. This can bypass schema checks and drift from the “single source of truth.”
-- Fingerprinting is implicit and under-documented:
-  - Multiple modules rely on `config_fingerprint`, but the “what changes the hash” contract is not explicit,
-    so it is easy to change tokenization behavior without changing the fingerprint.
-- README and docs do not describe a single “happy path” clearly. // true that
+- Fingerprints cover explicit preprocessing config, not code revisions, dataset
+  revisions, or implicit behavior.
+- Checkpoints remain weights-only; exact resume would require optimizer,
+  progress, and RNG state plus an equivalence test.
+- The harness still needs one controlled experiment and a written conclusion;
+  additional generic platform work is not the closeout goal.
 
-## Target Architecture (To-Be)
+## Closeout Architecture
 
 ### Principles
-- One “happy path” for standard training and evaluation.
+- One happy path for standard training and evaluation.
 - One primary data pipeline for most users.
-- Evaluation harness aligned with training data conventions and shared loaders.
-- Documentation emphasizes the intended workflow and hides legacy paths.
+- W&B owns detailed token-indexed history; compact local reports own reviewer
+  evidence and links back to W&B.
+- Evaluation uses training data conventions, shared loaders, and validated
+  checkpoint/dataset provenance.
 - Data preparation is explicit: training never auto-tokenizes or auto-packs.
+- One GPU or CPU device per run; multi-GPU is outside the closeout scope.
 
-### Proposed happy path
+### Happy path
 1) `prepare_data.py` produces tokenized/packed artifacts for the chosen dataset(s).
-2) `train.py` runs training using packed datasets and logs results (fails fast if artifacts are missing).
-3) `run_evals.py` runs a stable benchmark suite and perplexity evals.
-4) `generate_from_pretrained.py` supports qualitative checks.
+2) `train.py` uses packed datasets, logs detailed W&B metrics, and automatically
+   creates the checkpoint plus compact run evidence.
+3) `run_evals.py` adds validation perplexity; `run_lm_eval.py` adds selected
+   benchmarks. Each successful sidecar write refreshes the reports.
+4) `generate_from_pretrained.py` supports qualitative checks without modifying
+   the canonical evidence bundle.
 
-### Unification changes (high level)
-- Treat `prepare_data.py` as the single official data prep entrypoint.
-- Remove implicit tokenization/packing from training; require preprocessed artifacts.
-- Align evals to use `build_loaders(..., for_training=False)` and shared metrics.
-- Consolidate eval logic in `eval_utils.py` and keep `run_evals.py` thin.
-- Document mixed-corpus builder as advanced/experimental (or align its outputs with standard artifacts).
+### Implemented boundaries
+- `prepare_data.py` is the official data-preparation entrypoint.
+- Training requires preprocessed artifacts instead of tokenizing or packing
+  implicitly.
+- Evaluation uses shared loaders and metrics, with common logic in
+  `eval_utils.py` and thin entrypoints.
+- The mixed-corpus builder remains a separate advanced path.
 
 ### Mixed-corpus builder (advanced path)
 - Keep it separate from the happy path but make it dead simple to use.
@@ -130,21 +164,16 @@ We should simplify the default path while keeping advanced options available.
 - Default text fields for `PleIAs/SYNTH`: concatenate `query` + `synthetic_answer` (and optionally
   `synthetic_reasoning` if you want chain-of-thought style data).
 
-## Migration Plan (small steps)
-1) Docs first: document the happy path and current architecture in this file and README.
-2) Evals: restore one stable benchmark (ARC or Wikitext PPL) using shared loader.
-3) Data: decide whether mixed-corpus is official or advanced, then align docs and artifact naming.
-4) Cleanup: remove or demote redundant entrypoint docs once the happy path is stable.
+## Remaining Closeout
 
-## Additional Simplifications (from full repo read)
-- Dependencies in `pyproject.toml` are incomplete (code imports torch/transformers/datasets/tokenizers/wandb).
-- Tests are inconsistent: several test files are empty, while optimizer tests are heavy (slow for unit runs).
-- Tokenizer config mismatch: `train_tokenizer.py` reads `tokenizer_vocab_size`, but config uses
-  `custom_tokenizer_vocab_size`.
-- Config correctness: `moe_n_layers: ${n_layer}` likely should be `${model.n_layer}`.
-- Generation config pins a specific checkpoint path; default could be `latest` or empty.
+1) Recover historical runs, but classify checkpoints without matching validation
+   and report sidecars as unverified artifacts.
+2) Run one controlled, modest experiment with fixed fingerprints, budgets,
+   evaluation settings, and appropriate seeds.
+3) Preserve its compact reports and write a specific conclusion backed by the
+   W&B history.
 
-## MoE Routing Metrics (planned)
+## MoE Routing Metrics
 - Log lightweight routing stats during training when MoE is enabled.
 - Metrics include load balance (min/max/std), router entropy, top-k gate stats, and aux loss.
 - Per-layer stats are logged for debugging; aggregate means help spot global collapse.

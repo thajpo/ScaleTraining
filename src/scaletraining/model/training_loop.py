@@ -67,16 +67,21 @@ def training_run(
     loss_fn: nn.Module,
     val_loader: Optional[DataLoader] = None,
 ) -> Dict[str, Any]:
-    """Functional training loop until reaching token budget.
+    """Train until a terminal condition and return loss/progress evidence.
 
     Args:
-        cfg: Hydra config with fields used: device, accum_steps, grad_clip_norm,
-             logits_chunk_size, max_train_tokens, debug_memory.
+        cfg: Hydra config containing model, optimizer, training, logging, MoE,
+            and resolved-device settings.
         model: nn.Module with `forward_hidden` and `W_ue` attributes.
         train_loader: DataLoader yielding dicts with 'input_ids'.
         loss_fn: nn.CrossEntropyLoss(reduction='sum') for per-token normalization.
+        val_loader: Optional loader for token-interval validation.
+
     Returns:
-        stats: Per-window losses and terminal training progress.
+        Per-optimizer-window losses plus processed/applied token counts,
+        optimizer steps, stop reason, and any incomplete accumulation. Processed
+        tokens include forward/backward work; applied tokens include only
+        complete windows followed by an optimizer step.
     """
 
     matrix_params, other_params = split_model_matrix_params(

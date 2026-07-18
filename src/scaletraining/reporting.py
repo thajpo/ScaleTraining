@@ -277,7 +277,7 @@ def validate_evidence_payload(
     artifact: str,
     payload: dict[str, Any],
 ) -> None:
-    """Validate a proposed evaluation sidecar before it replaces evidence."""
+    """Validate proposed checkpoint/dataset provenance against run evidence."""
 
     if artifact not in {"eval_result", "lm_eval_result"}:
         raise ValueError(f"Unsupported evidence artifact: {artifact}")
@@ -300,7 +300,7 @@ def validate_evidence_payload(
 
 
 def build_report(run_dir: str | Path) -> dict[str, Any]:
-    """Read the available sidecars for one run without requiring all of them."""
+    """Build a portable report, rejecting inconsistent available sidecars."""
 
     run_path = Path(run_dir).expanduser().resolve(strict=False)
     artifacts = {
@@ -432,6 +432,8 @@ def render_markdown(report: dict[str, Any]) -> str:
 def write_reports(
     report: dict[str, Any], run_dir: str | Path
 ) -> tuple[Path, Path]:
+    """Persist the supplied report as JSON and rendered Markdown."""
+
     run_path = Path(run_dir).expanduser().resolve(strict=False)
     run_path.mkdir(parents=True, exist_ok=True)
     json_path = run_path / "run_report.json"

@@ -135,8 +135,8 @@ The report includes:
 
 After a run, the canonical evidence bundle is:
 
-- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, lifecycle status, and W&B run identity.
-- `outputs/<run>/train_result.json`: final training result copied into the run directory.
+- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, requested and resolved device, lifecycle status, terminal progress, checkpoint provenance, and W&B run identity.
+- `outputs/<run>/train_result.json`: final loss, core hyperparameters, checkpoint provenance, and terminal training progress.
 - `outputs/<run>/eval_results.json`: validation loss, perplexity, evaluated tokens, and batches.
 - `outputs/<run>/lm_eval_results.json`: lm-eval tasks and result payload when benchmarks are run.
 - `outputs/<run>/run_report.json` and `outputs/<run>/run_report.md`: machine-readable and reviewer-readable summaries.
@@ -145,16 +145,49 @@ Training writes the initial reports automatically. Validation and lm-eval
 refresh them after adding their result sidecars. `scripts/run_report.py` remains
 available as an explicit rebuild command.
 
+The run directory is allocated before W&B initialization or training starts.
+Its manifest moves from `running` to `completed`, or to `failed` with the
+exception type and message; failure finalization writes a partial report when
+possible. The tracking record is explicit even without an online run: its state
+is `initialized`, `disabled`, `unavailable`, or `initialization_failed`, with
+the mode, W&B path/URL, or initialization error when available.
+
+Terminal progress distinguishes all `tokens_processed` by forward/backward from
+`tokens_applied` in completed optimizer windows. It also records optimizer
+steps, the `token_budget_reached`, `early_stopping`, or `data_exhausted` stop
+reason, and any tokens or microbatches left in an incomplete accumulation
+window. Consequently, reaching a token budget can honestly report more
+processed than applied tokens.
+
 Checkpoint-bearing sidecars use the run-relative `model.pt` identity plus its
 SHA-256 digest, while retaining the original absolute path only as provenance.
 This keeps a complete run bundle verifiable after it is moved. Evaluation
 validates a proposed sidecar against the manifest, checkpoint contents, and
-existing evidence before atomically replacing the prior result.
+existing evidence before atomically replacing the prior result. A custom
+`eval.output_dir` must therefore be the checkpoint-owning run directory; the
+default is the checkpoint's parent. Portable reports use `.` and run-relative
+artifact paths, while `original_path` remains informational provenance.
 
 W&B is the detailed time-series record. Tracking schema version 1 uses
-`progress/tokens` as the common comparison axis and groups measurements under
-`train/*`, `validation/*`, `performance/*`, `compute/*`, and `moe/*`. The local
-bundle intentionally does not duplicate that history.
+`progress/tokens` as the common comparison axis and also records
+`progress/optimizer_step`. Measurements are grouped under `train/*`,
+`validation/*`, `performance/*`, `compute/*`, and `moe/*`; fixed model size is
+recorded under `model/*`:
+
+- `train/loss_per_token`, `train/learning_rate`, and
+  `train/grad_norm_pre_clip` describe each completed optimizer window.
+- `validation/loss_per_token` and `validation/perplexity` share the training
+  token axis.
+- `performance/tokens_per_second` measures only the timed accumulation compute
+  window, excluding loader wait, evaluation, logging, and report generation.
+- `compute/flops_total` is a cumulative estimate; peak allocated and reserved
+  byte counters are emitted only for the selected CUDA device.
+- `moe/l<layer>/*`, aggregate `moe/*` means, and `moe/aux_loss` expose routing
+  behavior when MoE is enabled.
+- `model/total_params`, `model/trainable_params`, and fp32/bf16 size estimates
+  are fixed metadata in W&B history and summary.
+
+The local bundle intentionally does not duplicate this detailed history.
 
 ## Closeout Status
 

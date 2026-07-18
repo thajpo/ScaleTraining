@@ -3,7 +3,8 @@ Integration with lm-evaluation-harness for standardized benchmarks.
 Runs zero-shot (or few-shot) evaluations on ScaleTraining checkpoints.
 
 Usage:
-  python -m scaletraining.entrypoints.run_lm_eval --model_path=outputs/latest/model.pt --tasks=hellaswag,mmlu
+  uv run python -m scaletraining.entrypoints.run_lm_eval \
+    generation.model_path=outputs/<run>/model.pt eval.tasks=hellaswag,mmlu
 """
 
 import logging

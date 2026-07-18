@@ -147,7 +147,7 @@ def resolve_eval_output_dir(
     cfg: DictConfig,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
-    """Return the directory where eval artifacts should be written."""
+    """Resolve the run directory where checkpoint-bound eval evidence belongs."""
 
     configured = getattr(cfg.eval, "output_dir", None)
     if configured:
@@ -205,6 +205,8 @@ def build_eval_result(
     checkpoint_path: str | Path | None = None,
     run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Build a validation sidecar bound to the checkpoint-owning run."""
+
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
     evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
@@ -227,6 +229,8 @@ def build_lm_eval_result(
     checkpoint_path: str | Path | None = None,
     run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Build an lm-eval sidecar bound to the checkpoint-owning run."""
+
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
     evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
@@ -271,6 +275,8 @@ def write_eval_result(
     *,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
+    """Validate and atomically replace the run's validation sidecar."""
+
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
     payload = build_eval_result(
         cfg,
@@ -289,6 +295,8 @@ def write_lm_eval_result(
     *,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
+    """Validate and atomically replace the run's lm-eval sidecar."""
+
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
     payload = build_lm_eval_result(
         cfg,

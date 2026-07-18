@@ -58,11 +58,18 @@ Explicitly rebuild a completed run evidence bundle if its sidecars changed:
 uv run python scripts/run_report.py --run-dir outputs/<run>
 ```
 
+Evaluation defaults to writing beside the selected checkpoint. If overriding
+`eval.output_dir`, point it at that same checkpoint-owning run directory; an
+unrelated directory is rejected before any valid sidecar is replaced. Reports
+show lifecycle state, W&B identity, processed versus optimizer-applied tokens,
+stop reason, and incomplete gradient accumulation when present.
+
 ## Heavier Work To Skip In A Review
 
 - `scripts/build_pretraining_corpus.py --preset standard` targets a 1B-token
   corpus and is not a laptop demo.
-- Real training runs can require GPU time and W&B credentials.
+- Real training runs can require GPU time; online W&B tracking requires
+  credentials, while disabled/offline tracking remains explicit in the manifest.
 - `lm-eval` benchmark runs can be slow and should be reported as run artifacts,
   not run live for a reviewer.
 - Raw checkpoints under `outputs/` are intentionally ignored; commit compact

@@ -72,7 +72,7 @@ def read_metadata(path: str) -> Dict[str, Any]:
 
 
 def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = None) -> str:
-    """Write the stable configuration and identity for one training run."""
+    """Write a schema-v1 run manifest, defaulting its lifecycle to ``created``."""
     os.makedirs(out_dir, exist_ok=True)
     training_cfg = cfg.training
     optimizer_cfg = cfg.optimizer
@@ -160,7 +160,7 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
 
 
 def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
-    """Update lifecycle fields without rebuilding or discarding the manifest."""
+    """Shallow-update manifest lifecycle/evidence fields without rebuilding it."""
 
     manifest_path = Path(out_dir) / "run_manifest.json"
     if not manifest_path.exists():
@@ -194,7 +194,7 @@ def _resolve_output_root(cfg: Any, out_root: Optional[str] = None) -> Path:
 
 
 def create_run_dir(cfg: Any, out_root: Optional[str] = None) -> Path:
-    """Allocate the directory that all artifacts for one run will share."""
+    """Atomically allocate the unique directory all artifacts for a run share."""
 
     tokenizer_cfg = cfg.tokenizer
     output_root = _resolve_output_root(cfg, out_root)
@@ -225,7 +225,11 @@ def save_model(
     *,
     run_dir: str | Path | None = None,
 ) -> str:
-    """Save a checkpoint into an existing run, or allocate a run for callers."""
+    """Save checkpoint/config into a run and return that run's directory path.
+
+    When ``run_dir`` is omitted, a unique directory and completed manifest are
+    also created for compatibility with standalone callers.
+    """
 
     allocated_here = run_dir is None
     run_path = create_run_dir(cfg, out_root) if run_dir is None else Path(run_dir)

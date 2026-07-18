@@ -5,5 +5,7 @@
 tasks: "hellaswag"
 
 # Persist machine-readable evaluation artifacts next to the checkpoint by default.
+# An override must still name the run directory that owns <output_dir>/model.pt;
+# unrelated output directories fail provenance validation before replacement.
 write_results: true
 output_dir: null

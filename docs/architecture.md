@@ -51,8 +51,19 @@ Hydra config
 - Evaluation and generation are separated from training for reproducibility.
 - W&B is the detailed metric history, with processed tokens as the shared
   train/validation/MoE comparison axis.
+- Training throughput covers the synchronized accumulation compute window, not
+  loader wait, evaluation, logging, or report generation. Cumulative FLOPs are
+  estimated, and peak allocated/reserved memory is read only from the selected
+  CUDA device.
 - One local run directory links the W&B identity, configuration fingerprint,
   checkpoint, compact results, and automatically generated reports.
+- The run directory exists before tracking or training begins. Its manifest
+  records the requested and resolved device, an explicit W&B availability
+  state, and a `running` to `completed`/`failed` lifecycle; failures retain the
+  original error and a partial report when finalization succeeds.
+- Terminal progress distinguishes processed tokens from tokens applied by a
+  completed optimizer step, records the stop reason, and exposes any unfinished
+  gradient-accumulation window.
 - Checkpoint provenance uses a run-relative identity and SHA-256 content digest;
   the recorded original absolute path is informational so archived run bundles
   remain portable.
@@ -60,6 +71,9 @@ Hydra config
   requiring a separate reporting step.
 - Evaluation sidecars are validated in memory and atomically replaced only when
   their checkpoint and dataset provenance agrees with the existing run evidence.
+- Evaluation output belongs in the checkpoint's run directory. The generated
+  report uses run-relative paths so a complete evidence directory can be moved
+  and revalidated without rewriting its canonical identities.
 - The reviewer smoke path is CPU-only and uses local fixture text instead of
   HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,

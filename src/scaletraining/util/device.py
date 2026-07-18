@@ -24,7 +24,12 @@ def clear_cuda_cache() -> None:
 
 
 def resolve_device(cfg: DictConfig) -> str:
-    """Return the requested compute device, defaulting to CUDA when available."""
+    """Resolve the runtime device and preserve requested/resolved provenance.
+
+    CUDA requests fall back to CPU when CUDA is unavailable. The original
+    request is retained in ``cfg.device_requested`` while the usable device is
+    written to ``cfg.device_resolved`` and returned.
+    """
 
     device_cfg = cfg.device
     requested = getattr(device_cfg, "device", None)

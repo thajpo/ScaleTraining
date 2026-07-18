@@ -23,7 +23,12 @@ except ModuleNotFoundError:  # pragma: no cover - tracking becomes a no-op
 
 @dataclass(frozen=True)
 class WandbRunIdentity:
-    """Serializable reference to the W&B run associated with a local run."""
+    """Serializable reference to the W&B run associated with a local run.
+
+    ``state`` is one of ``initialized``, ``disabled``, ``unavailable``, or
+    ``initialization_failed`` so local evidence remains explicit when W&B is
+    offline or absent.
+    """
 
     provider: str = "wandb"
     schema_version: int = TRACKING_SCHEMA_VERSION
@@ -121,7 +126,12 @@ def log_train_metrics(
     peak_memory_allocated_bytes: int | None = None,
     peak_memory_reserved_bytes: int | None = None,
 ) -> None:
-    """Log one optimizer window using schema-v1 metric names."""
+    """Log one optimizer window using schema-v1 metric names.
+
+    ``throughput`` is the timed training compute window, ``flops_used`` is a
+    cumulative estimate, and peak-memory values are optional selected-CUDA
+    device counters.
+    """
 
     metrics: dict[str, Any] = {
         "train/loss_per_token": float(loss),
@@ -193,7 +203,7 @@ def log_model_metrics(metrics: dict[str, Any]) -> None:
 
 
 def init_wandb(cfg: Any, tokenizer_vocab_size: int, tok: Any) -> WandbRunIdentity:
-    """Initialize W&B and return only the serializable run identity."""
+    """Best-effort initialize W&B and return a serializable identity/state."""
 
     if wandb_sdk is None:
         return WandbRunIdentity(state="unavailable")
