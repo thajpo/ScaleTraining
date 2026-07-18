@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 import torch.nn as nn
 
 from scaletraining.config import load_project_config
+from scaletraining.reporting import refresh_run_report
 from scaletraining.util import resolve_device
 from scaletraining.util.eval_utils import (
     evaluate_perplexity_stats,
@@ -47,6 +48,8 @@ def main(cfg: DictConfig) -> None:
     if bool(getattr(cfg.eval, "write_results", True)):
         result_path = write_eval_result(cfg, metrics)
         print(f"Evaluation results written to: {result_path}")
+        json_report, markdown_report = refresh_run_report(result_path.parent)
+        print(f"Run evidence refreshed: {json_report} and {markdown_report}")
 
 
 if __name__ == "__main__":

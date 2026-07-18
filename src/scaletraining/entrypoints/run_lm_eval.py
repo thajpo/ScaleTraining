@@ -3,7 +3,8 @@ Integration with lm-evaluation-harness for standardized benchmarks.
 Runs zero-shot (or few-shot) evaluations on ScaleTraining checkpoints.
 
 Usage:
-  python -m scaletraining.entrypoints.run_lm_eval --model_path=outputs/latest/model.pt --tasks=hellaswag,mmlu
+  uv run python -m scaletraining.entrypoints.run_lm_eval \
+    generation.model_path=outputs/<run>/model.pt eval.tasks=hellaswag,mmlu
 """
 
 import logging
@@ -18,6 +19,7 @@ from lm_eval import simple_evaluate
 from lm_eval.api.model import LM
 
 from scaletraining.config import load_project_config
+from scaletraining.reporting import refresh_run_report
 from scaletraining.util import resolve_device
 from scaletraining.util.eval_utils import (
     load_pretrained_model_and_tokenizer,
@@ -331,6 +333,8 @@ def main(cfg: DictConfig):
     if bool(getattr(cfg.eval, "write_results", True)):
         result_path = write_lm_eval_result(cfg, tasks_list, results)
         print(f"lm-eval results written to: {result_path}")
+        json_report, markdown_report = refresh_run_report(result_path.parent)
+        print(f"Run evidence refreshed: {json_report} and {markdown_report}")
 
 if __name__ == "__main__":
     main()

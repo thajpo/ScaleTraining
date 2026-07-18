@@ -9,6 +9,12 @@ import torch
 from omegaconf import DictConfig, open_dict
 
 
+def uses_cuda(device: str | torch.device) -> bool:
+    """Return whether a resolved device selects an available CUDA runtime."""
+
+    return torch.device(device).type == "cuda" and torch.cuda.is_available()
+
+
 def clear_cuda_cache() -> None:
     """Release cached CUDA memory if a GPU is available."""
 
@@ -18,10 +24,18 @@ def clear_cuda_cache() -> None:
 
 
 def resolve_device(cfg: DictConfig) -> str:
-    """Return the requested compute device, defaulting to CUDA when available."""
+    """Resolve the runtime device and preserve requested/resolved provenance.
+
+    CUDA requests fall back to CPU when CUDA is unavailable. The original
+    request is retained in ``cfg.device_requested`` while the usable device is
+    written to ``cfg.device_resolved`` and returned.
+    """
 
     device_cfg = cfg.device
     requested = getattr(device_cfg, "device", None)
+    recorded_request = getattr(cfg, "device_requested", None)
+    if recorded_request is None:
+        recorded_request = requested
 
     if isinstance(requested, str) and requested:
         device = requested
@@ -33,7 +47,12 @@ def resolve_device(cfg: DictConfig) -> str:
         except Exception:
             pass
 
-    if device == "cuda" and not torch.cuda.is_available():
+    try:
+        requests_cuda = torch.device(device).type == "cuda"
+    except (RuntimeError, TypeError):
+        requests_cuda = False
+
+    if requests_cuda and not torch.cuda.is_available():
         device = "cpu"
         try:
             with open_dict(device_cfg):
@@ -43,6 +62,7 @@ def resolve_device(cfg: DictConfig) -> str:
 
     try:
         with open_dict(cfg):
+            cfg.device_requested = recorded_request
             cfg.device_resolved = device
     except Exception:
         pass
@@ -63,4 +83,9 @@ def configure_rocm_and_sdp(cfg: Any) -> None:
         print(f"RoCM settings not configured: {exc}")
 
 
-__all__ = ["clear_cuda_cache", "configure_rocm_and_sdp", "resolve_device"]
+__all__ = [
+    "clear_cuda_cache",
+    "configure_rocm_and_sdp",
+    "resolve_device",
+    "uses_cuda",
+]

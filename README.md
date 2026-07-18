@@ -9,10 +9,10 @@ The repo is intentionally reviewable without a GPU. The default verification pat
 - Hydra-based experiment configuration with small overrideable config groups.
 - Explicit data preparation before training, with fingerprinted tokenized and packed artifacts.
 - Decoder-only transformer implementation with RoPE, tied embeddings, dense FFNs, and optional MoE blocks.
-- Token-budgeted training loop with gradient accumulation, learning-rate scheduling, validation hooks, W&B logging, and checkpoint manifests.
+- Token-budgeted training loop with gradient accumulation, learning-rate scheduling, validation hooks, token-indexed W&B metrics, and checkpoint manifests.
 - MoE routing metrics for entropy, load balance, expert usage, top-k gates, and auxiliary loss.
 - Checkpoint loading for validation perplexity, generation, and lm-evaluation-harness benchmarks, with JSON eval sidecars.
-- Run evidence bundles that combine training, checkpoint, validation, and benchmark artifacts.
+- Automatically generated run evidence bundles that link training, checkpoint, validation, benchmark, and W&B records.
 - CPU-safe tests and CI checks for config loading, public entrypoints, model contracts, and optimizer smoke coverage.
 
 ## Reviewer Entry Points
@@ -40,7 +40,7 @@ To exercise the full artifact path on CPU without network access:
 uv run python scripts/smoke_cpu_e2e.py
 ```
 
-The smoke command creates a temporary run directory, prepares local fixture data, trains a tiny model, evaluates validation perplexity, builds a run report, and verifies the expected sidecar artifacts.
+The smoke command creates a temporary run directory, prepares local fixture data, trains a tiny model, verifies that training automatically builds a run report, evaluates validation perplexity, and verifies that evaluation refreshes the same report.
 
 Slow optimizer convergence coverage is intentionally excluded from the default test run. To inspect it:
 
@@ -55,12 +55,12 @@ flowchart LR
     cfg["Hydra config"] --> prep["prepare_data"]
     prep --> tok["fingerprinted tokenized dataset"]
     tok --> pack["fingerprinted packed dataset"]
-    pack --> train["train"]
-    train --> ckpt["model.pt + run_manifest.json"]
+    pack --> train["train + W&B metrics"]
+    train --> ckpt["checkpoint + automatic run report"]
     ckpt --> ppl["run_evals eval_results.json"]
     ckpt --> gen["generate_from_pretrained"]
     ckpt --> bench["run_lm_eval lm_eval_results.json"]
-    ppl --> report["run_report.json + run_report.md"]
+    ppl --> report["refresh run_report.json + run_report.md"]
     bench --> report
 ```
 
@@ -74,7 +74,7 @@ uv run python -m compileall -q src scripts tests
 uv run python scripts/smoke_cpu_e2e.py
 ```
 
-The smoke run verifies that `prepare_data`, `train`, `run_evals`, and `run_report` work together on CPU and produce `run_manifest.json`, `train_result.json`, `eval_results.json`, `run_report.json`, and `run_report.md`.
+The smoke run verifies that `prepare_data`, `train`, and `run_evals` work together on CPU. Training produces `run_manifest.json`, `model.pt`, `model_config.json`, `train_result.json`, `run_report.json`, and `run_report.md`; evaluation adds `eval_results.json` and refreshes both reports automatically.
 
 ## Training Path
 
@@ -96,7 +96,7 @@ uv run python -m scaletraining.entrypoints.generate_from_pretrained
 # 5. Run lm-evaluation-harness tasks
 LM_EVAL_TASKS=hellaswag uv run python -m scaletraining.entrypoints.run_lm_eval
 
-# 6. Build a reviewer-facing evidence bundle
+# 6. Optionally refresh the automatically generated evidence bundle
 uv run python scripts/run_report.py --run-dir outputs/<run>
 ```
 
@@ -135,25 +135,85 @@ The report includes:
 
 After a run, the canonical evidence bundle is:
 
-- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, and checkpoint metadata.
-- `outputs/<run>/train_result.json`: final training result copied into the run directory.
+- `outputs/<run>/run_manifest.json`: config, dataset fingerprint, requested and resolved device, lifecycle status, terminal progress, checkpoint provenance, and W&B run identity.
+- `outputs/<run>/train_result.json`: final loss, core hyperparameters, checkpoint provenance, and terminal training progress.
 - `outputs/<run>/eval_results.json`: validation loss, perplexity, evaluated tokens, and batches.
 - `outputs/<run>/lm_eval_results.json`: lm-eval tasks and result payload when benchmarks are run.
 - `outputs/<run>/run_report.json` and `outputs/<run>/run_report.md`: machine-readable and reviewer-readable summaries.
 
-## Wrap-Up Evidence
+Training writes the initial reports automatically. Validation and lm-eval
+refresh them after adding their result sidecars. `scripts/run_report.py` remains
+available as an explicit rebuild command.
 
-The final project artifact should be a small checked-in summary of several completed runs, not raw checkpoints. The intended format is a Markdown table in this README backed by compact JSON/Markdown reports with:
+The run directory is allocated before W&B initialization or training starts.
+Its manifest moves from `running` to `completed`, or to `failed` with the
+exception type and message; failure finalization writes a partial report when
+possible. The tracking record is explicit even without an online run: its state
+is `initialized`, `disabled`, `unavailable`, or `initialization_failed`, with
+the mode, W&B path/URL, or initialization error when available.
 
-- run id and command summary,
-- dataset fingerprint and token budget,
-- model shape and optimizer,
-- final train loss,
-- validation loss/perplexity,
-- benchmark results when available,
-- notes about hardware and runtime.
+Terminal progress distinguishes all `tokens_processed` by forward/backward from
+`tokens_applied` in completed optimizer windows. It also records optimizer
+steps, the `token_budget_reached`, `early_stopping`, or `data_exhausted` stop
+reason, and any tokens or microbatches left in an incomplete accumulation
+window. Consequently, reaching a token budget can honestly report more
+processed than applied tokens.
 
-Raw `outputs/` directories and model weights stay ignored. Only compact evidence summaries should be committed.
+Checkpoint-bearing sidecars use the run-relative `model.pt` identity plus its
+SHA-256 digest, while retaining the original absolute path only as provenance.
+This keeps a complete run bundle verifiable after it is moved. Evaluation
+validates a proposed sidecar against the manifest, checkpoint contents, and
+existing evidence before atomically replacing the prior result. A custom
+`eval.output_dir` must therefore be the checkpoint-owning run directory; the
+default is the checkpoint's parent. Portable reports use `.` and run-relative
+artifact paths, while `original_path` remains informational provenance.
+
+W&B is the detailed time-series record. Tracking schema version 1 uses
+`progress/tokens` as the common comparison axis and also records
+`progress/optimizer_step`. Measurements are grouped under `train/*`,
+`validation/*`, `performance/*`, `compute/*`, and `moe/*`; fixed model size is
+recorded under `model/*`:
+
+- `train/loss_per_token`, `train/learning_rate`, and
+  `train/grad_norm_pre_clip` describe each completed optimizer window.
+- `validation/loss_per_token` and `validation/perplexity` share the training
+  token axis.
+- `performance/tokens_per_second` measures only the timed accumulation compute
+  window, excluding loader wait, evaluation, logging, and report generation.
+- `compute/flops_total` is a cumulative estimate; peak allocated and reserved
+  byte counters are emitted only for the selected CUDA device.
+- `moe/l<layer>/*`, aggregate `moe/*` means, and `moe/aux_loss` expose routing
+  behavior when MoE is enabled.
+- `model/total_params`, `model/trainable_params`, and fp32/bf16 size estimates
+  are fixed metadata in W&B history and summary.
+
+The local bundle intentionally does not duplicate this detailed history.
+
+## Closeout Status
+
+The training harness is substantially complete: the quick tests, syntax
+compilation, and offline CPU prepare → train → evaluate → report path validate
+the software and artifact contracts. This is strong systems evidence, but it is
+not yet a differentiated experimental conclusion.
+
+Known limitations:
+
+- Checkpoints contain model weights and model configuration, but not optimizer,
+  token-progress, or RNG state. Exact interruption/resume equivalence is not
+  supported.
+- Historical checkpoints that lack validation and report sidecars are not
+  treated as experimental evidence.
+- CPU smoke runs prove wiring and reproducibility surfaces, not model quality.
+
+The remaining closeout target is one controlled, modest experiment with fixed
+fingerprints, token budgets, evaluation settings, and appropriate seeds. Keep
+its detailed history in W&B, retain the compact run reports, and write down a
+specific conclusion. Any follow-up tooling should directly serve that study;
+do not add multi-GPU or generic platform features simply to expand the feature
+list.
+
+Raw `outputs/` directories and model weights stay ignored. Only compact,
+reviewable evidence summaries should be committed.
 
 ## Configuration
 
@@ -178,11 +238,11 @@ uv run python -m scaletraining.entrypoints.train model.n_layer=8 training.batch_
 ## Entrypoints
 
 - `prepare_data.py`: tokenizes and packs datasets offline.
-- `train.py`: trains until the token budget and writes checkpoint artifacts plus `train_result.json`.
-- `run_evals.py`: computes validation loss/perplexity from a checkpoint and writes `eval_results.json`.
+- `train.py`: trains until the token budget and automatically writes the checkpoint, manifest, result, and initial run reports.
+- `run_evals.py`: computes validation loss/perplexity, writes `eval_results.json`, and refreshes the run reports.
 - `generate_from_pretrained.py`: generates text from a trained checkpoint.
-- `run_lm_eval.py`: runs lm-evaluation-harness tasks against a checkpoint and writes `lm_eval_results.json`.
-- `scripts/run_report.py`: combines run sidecars into `run_report.json` and `run_report.md`.
+- `run_lm_eval.py`: runs lm-evaluation-harness tasks, writes `lm_eval_results.json`, and refreshes the run reports.
+- `scripts/run_report.py`: manually rebuilds `run_report.json` and `run_report.md` when needed.
 
 ## Advanced Corpus Builder
 

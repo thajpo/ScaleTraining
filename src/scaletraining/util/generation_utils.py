@@ -10,6 +10,8 @@ import torch
 from torch import Tensor
 from torch.amp import autocast
 
+from scaletraining.util.device import uses_cuda
+
 
 def top_k_filter(logits: Tensor, k: int) -> Tensor:
     """Keep top-k logits per row and set others to -inf.
@@ -43,7 +45,7 @@ def generate_autoregressive(
     Args:
         model: nn.Module with `forward(input_ids)` -> logits [B, T, V].
         tokenizer: HuggingFace tokenizer used to encode/decode text.
-        device: 'cuda' or 'cpu'.
+        device: PyTorch device string such as ``cpu``, ``cuda``, or ``cuda:1``.
         prompt: seed text to condition on.
         max_new_tokens: number of tokens to sample.
         temperature: >0; divides logits before softmax.
@@ -60,8 +62,11 @@ def generate_autoregressive(
         tokenizer.pad_token = tokenizer.eos_token
 
     input_ids = tokenizer.encode(prompt, return_tensors='pt').to(device)
-    use_cuda = (device == 'cuda' and torch.cuda.is_available())
-    ctx = autocast(device_type='cuda', dtype=torch.bfloat16) if use_cuda else contextlib.nullcontext()
+    ctx = (
+        autocast(device_type="cuda", dtype=torch.bfloat16)
+        if uses_cuda(device)
+        else contextlib.nullcontext()
+    )
 
     for _ in range(max_new_tokens):
         with ctx:
@@ -78,4 +83,3 @@ def generate_autoregressive(
             break
 
     return tokenizer.decode(input_ids[0], skip_special_tokens=True)
-

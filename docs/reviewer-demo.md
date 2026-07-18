@@ -39,10 +39,12 @@ uv run python -m scaletraining.entrypoints.run_evals --help
 uv run python -m scaletraining.entrypoints.generate_from_pretrained --help
 ```
 
-The smoke command uses `tests/fixtures/smoke_corpus`, writes all data and model
-artifacts to a temporary directory, forces `device=cpu`, and checks that the run
-contains `run_manifest.json`, `train_result.json`, `eval_results.json`,
-`run_report.json`, and `run_report.md`.
+The smoke command copies `tests/fixtures/smoke_corpus` into a short temporary
+path, writes all data and model artifacts to that temporary directory, and
+forces `device=cpu`. It proves training automatically creates
+`run_manifest.json`, `model.pt`, `model_config.json`, `train_result.json`,
+`run_report.json`, and `run_report.md`; validation then adds `eval_results.json`
+and refreshes the same reports.
 
 Inspect model size for a config:
 
@@ -50,17 +52,24 @@ Inspect model size for a config:
 uv run python scripts/model_size.py
 ```
 
-Inspect a completed run evidence bundle:
+Explicitly rebuild a completed run evidence bundle if its sidecars changed:
 
 ```bash
 uv run python scripts/run_report.py --run-dir outputs/<run>
 ```
 
+Evaluation defaults to writing beside the selected checkpoint. If overriding
+`eval.output_dir`, point it at that same checkpoint-owning run directory; an
+unrelated directory is rejected before any valid sidecar is replaced. Reports
+show lifecycle state, W&B identity, processed versus optimizer-applied tokens,
+stop reason, and incomplete gradient accumulation when present.
+
 ## Heavier Work To Skip In A Review
 
 - `scripts/build_pretraining_corpus.py --preset standard` targets a 1B-token
   corpus and is not a laptop demo.
-- Real training runs can require GPU time and W&B credentials.
+- Real training runs can require GPU time; online W&B tracking requires
+  credentials, while disabled/offline tracking remains explicit in the manifest.
 - `lm-eval` benchmark runs can be slow and should be reported as run artifacts,
   not run live for a reviewer.
 - Raw checkpoints under `outputs/` are intentionally ignored; commit compact
@@ -72,5 +81,6 @@ uv run python scripts/run_report.py --run-dir outputs/<run>
 - Explicit preprocessing and artifact fingerprinting.
 - A shared training surface for dense and MoE models.
 - Testable entrypoints and model/data-processing contracts.
-- Reproducible eval sidecars and reviewer-readable run reports.
+- Token-indexed W&B tracking linked from compact local run evidence.
+- Automatically refreshed eval sidecars and reviewer-readable run reports.
 - A hardware-agnostic CPU smoke path that exercises the artifact contract.

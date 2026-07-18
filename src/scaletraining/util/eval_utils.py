@@ -3,7 +3,9 @@ import contextlib
 from datetime import datetime, timezone
 import json
 import math
+import os
 from pathlib import Path
+import tempfile
 from typing import Any, Tuple
 
 import torch
@@ -11,8 +13,10 @@ from omegaconf import DictConfig, open_dict
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
 from scaletraining.model.model import TransformerNetwork
+from scaletraining.reporting import validate_evidence_payload
 from scaletraining.util import find_latest_model_path
-from scaletraining.util.device import resolve_device
+from scaletraining.util.artifacts import build_checkpoint_provenance
+from scaletraining.util.device import resolve_device, uses_cuda
 from scaletraining.util.path_utils import config_fingerprint, get_cfg_subset
 
 
@@ -47,7 +51,7 @@ def evaluate_perplexity_stats(
         input_ids = batch["input_ids"].to(device)
         context = (
             autocast(device_type="cuda", dtype=torch.bfloat16)
-            if (device == "cuda" and torch.cuda.is_available())
+            if uses_cuda(device)
             else contextlib.nullcontext()
         )
         with context:
@@ -143,7 +147,7 @@ def resolve_eval_output_dir(
     cfg: DictConfig,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
-    """Return the directory where eval artifacts should be written."""
+    """Resolve the run directory where checkpoint-bound eval evidence belongs."""
 
     configured = getattr(cfg.eval, "output_dir", None)
     if configured:
@@ -199,13 +203,17 @@ def build_eval_result(
     validation: dict[str, Any],
     *,
     checkpoint_path: str | Path | None = None,
+    run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Build a validation sidecar bound to the checkpoint-owning run."""
+
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
         {
             "schema_version": 1,
             "created_at": _utc_now(),
-            "checkpoint": {"path": checkpoint},
+            "checkpoint": build_checkpoint_provenance(checkpoint, evidence_dir),
             "dataset": _dataset_summary(cfg),
             "validation": validation,
             "config_summary": _config_summary(cfg),
@@ -219,13 +227,17 @@ def build_lm_eval_result(
     results: dict[str, Any],
     *,
     checkpoint_path: str | Path | None = None,
+    run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
+    """Build an lm-eval sidecar bound to the checkpoint-owning run."""
+
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
         {
             "schema_version": 1,
             "created_at": _utc_now(),
-            "checkpoint": {"path": checkpoint},
+            "checkpoint": build_checkpoint_provenance(checkpoint, evidence_dir),
             "dataset": _dataset_summary(cfg),
             "tasks": tasks,
             "results": results,
@@ -236,8 +248,24 @@ def build_lm_eval_result(
 
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
     return path
 
 
@@ -247,8 +275,16 @@ def write_eval_result(
     *,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
+    """Validate and atomically replace the run's validation sidecar."""
+
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
-    payload = build_eval_result(cfg, validation, checkpoint_path=checkpoint_path)
+    payload = build_eval_result(
+        cfg,
+        validation,
+        checkpoint_path=checkpoint_path,
+        run_dir=output_dir,
+    )
+    validate_evidence_payload(output_dir, "eval_result", payload)
     return _write_json(output_dir / "eval_results.json", payload)
 
 
@@ -259,8 +295,17 @@ def write_lm_eval_result(
     *,
     checkpoint_path: str | Path | None = None,
 ) -> Path:
+    """Validate and atomically replace the run's lm-eval sidecar."""
+
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
-    payload = build_lm_eval_result(cfg, tasks, results, checkpoint_path=checkpoint_path)
+    payload = build_lm_eval_result(
+        cfg,
+        tasks,
+        results,
+        checkpoint_path=checkpoint_path,
+        run_dir=output_dir,
+    )
+    validate_evidence_payload(output_dir, "lm_eval_result", payload)
     return _write_json(output_dir / "lm_eval_results.json", payload)
 
 
