@@ -125,6 +125,19 @@ def test_manifest_preserves_requested_cuda_after_cpu_fallback(tmp_path, monkeypa
     assert manifest["training"]["device_resolved"] == "cpu"
 
 
+def test_indexed_cuda_request_uses_the_same_fallback_and_provenance(
+    tmp_path, monkeypatch
+):
+    cfg = _cfg(tmp_path)
+    cfg.device.device = "cuda:1"
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    assert resolve_device(cfg) == "cpu"
+    assert cfg.device_requested == "cuda:1"
+    assert cfg.device_resolved == "cpu"
+    assert cfg.device.device == "cpu"
+
+
 def test_run_directory_allocation_avoids_same_second_collisions(tmp_path):
     cfg = _cfg(tmp_path)
 

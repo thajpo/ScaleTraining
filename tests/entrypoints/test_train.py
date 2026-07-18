@@ -11,6 +11,22 @@ def test_train_entrypoint_imports():
     assert callable(train.main)
 
 
+def test_compile_gate_accepts_an_indexed_cuda_device(monkeypatch):
+    import scaletraining.entrypoints.train as train
+
+    cfg = OmegaConf.create(
+        {
+            "training": {"compile_model": True},
+            "device": {"device": "cuda:1"},
+            "device_resolved": "cuda:1",
+        }
+    )
+
+    monkeypatch.setattr(train.torch.version, "hip", None)
+
+    assert train._should_compile(cfg) is True
+
+
 def test_training_error_keeps_original_exception_and_finalizes_evidence(
     tmp_path, monkeypatch
 ):

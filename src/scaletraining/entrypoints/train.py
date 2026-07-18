@@ -49,7 +49,7 @@ def _should_compile(cfg: DictConfig) -> bool:
     if not bool(getattr(cfg.training, "compile_model", True)):
         return False
     device = str(getattr(cfg, "device_resolved", None) or cfg.device.device)
-    if device != "cuda":
+    if torch.device(device).type != "cuda":
         return False
     if torch.version.hip is None:
         return True

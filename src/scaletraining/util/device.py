@@ -36,7 +36,12 @@ def resolve_device(cfg: DictConfig) -> str:
         except Exception:
             pass
 
-    if device == "cuda" and not torch.cuda.is_available():
+    try:
+        requests_cuda = torch.device(device).type == "cuda"
+    except (RuntimeError, TypeError):
+        requests_cuda = False
+
+    if requests_cuda and not torch.cuda.is_available():
         device = "cpu"
         try:
             with open_dict(device_cfg):
