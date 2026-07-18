@@ -9,7 +9,7 @@ from .artifacts import (
     update_run_manifest,
     write_metadata,
 )
-from .device import clear_cuda_cache, configure_rocm_and_sdp, resolve_device
+from .device import clear_cuda_cache, configure_rocm_and_sdp, resolve_device, uses_cuda
 from .model_stats import count_parameters, humanize_bytes, humanize_params
 from .path_utils import (
     get_cfg_subset,
@@ -29,6 +29,7 @@ __all__ = [
     "clear_cuda_cache",
     "configure_rocm_and_sdp",
     "resolve_device",
+    "uses_cuda",
     "init_wandb",
     "finish_wandb",
     "log_train_metrics",

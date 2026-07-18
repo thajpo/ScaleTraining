@@ -9,6 +9,12 @@ import torch
 from omegaconf import DictConfig, open_dict
 
 
+def uses_cuda(device: str | torch.device) -> bool:
+    """Return whether a resolved device selects an available CUDA runtime."""
+
+    return torch.device(device).type == "cuda" and torch.cuda.is_available()
+
+
 def clear_cuda_cache() -> None:
     """Release cached CUDA memory if a GPU is available."""
 
@@ -72,4 +78,9 @@ def configure_rocm_and_sdp(cfg: Any) -> None:
         print(f"RoCM settings not configured: {exc}")
 
 
-__all__ = ["clear_cuda_cache", "configure_rocm_and_sdp", "resolve_device"]
+__all__ = [
+    "clear_cuda_cache",
+    "configure_rocm_and_sdp",
+    "resolve_device",
+    "uses_cuda",
+]
