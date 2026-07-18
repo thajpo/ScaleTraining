@@ -1,6 +1,7 @@
 """Helpers for persisting training artifacts and metadata."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from datetime import datetime, timezone
@@ -13,10 +14,42 @@ from .path_utils import _sanitize, config_fingerprint, get_cfg_subset
 
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
+CHECKPOINT_FILENAME = "model.pt"
 
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def checkpoint_sha256(path: str | Path) -> str:
+    """Return the SHA-256 digest for a checkpoint file."""
+
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def build_checkpoint_provenance(
+    checkpoint_path: str | Path,
+    run_dir: str | Path,
+) -> dict[str, str]:
+    """Build a portable identity for the checkpoint owned by a run directory."""
+
+    run_path = Path(run_dir).expanduser().resolve(strict=False)
+    checkpoint = Path(checkpoint_path).expanduser().resolve(strict=True)
+    expected = (run_path / CHECKPOINT_FILENAME).resolve(strict=False)
+    if checkpoint != expected:
+        raise ValueError(
+            f"Checkpoint {checkpoint} does not belong to run directory {run_path}; "
+            f"expected {expected}."
+        )
+    return {
+        "path": CHECKPOINT_FILENAME,
+        "sha256": checkpoint_sha256(checkpoint),
+        "original_path": str(checkpoint),
+    }
 
 
 def write_metadata(path: str, data: Dict[str, Any]) -> None:
@@ -198,7 +231,7 @@ def save_model(
     run_path = create_run_dir(cfg, out_root) if run_dir is None else Path(run_dir)
     run_path.mkdir(parents=True, exist_ok=True)
 
-    model_path = run_path / "model.pt"
+    model_path = run_path / CHECKPOINT_FILENAME
     base_mod = getattr(model, "_orig_mod", model)
     state = base_mod.state_dict()
     torch.save({"state_dict": state}, model_path)
@@ -270,6 +303,9 @@ def find_latest_model_path(output_root: str) -> Optional[str]:
 
 
 __all__ = [
+    "CHECKPOINT_FILENAME",
+    "build_checkpoint_provenance",
+    "checkpoint_sha256",
     "write_metadata",
     "read_metadata",
     "create_run_dir",

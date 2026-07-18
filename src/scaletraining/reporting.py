@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from scaletraining.util.artifacts import checkpoint_sha256
+
 
 ARTIFACT_FILES = {
     "manifest": "run_manifest.json",
@@ -54,14 +56,31 @@ def _validation_summary(
 def _checkpoint_value(payload: dict[str, Any] | None, key: str) -> Any:
     if not payload:
         return None
-    value = payload.get(key)
+    return payload.get(key)
+
+
+def _train_checkpoint_value(train_result: dict[str, Any] | None) -> Any:
+    return _checkpoint_value(train_result, "checkpoint") or _checkpoint_value(
+        train_result, "model_path"
+    )
+
+
+def _resolved_checkpoint_path(run_path: Path, value: Any) -> Path | None:
     if isinstance(value, dict):
-        return value.get("path")
-    return value
+        value = value.get("path")
+    if value is None:
+        return None
+    path = Path(str(value)).expanduser()
+    if not path.is_absolute():
+        path = run_path / path
+    return path.resolve(strict=False)
 
 
-def _resolved_path(value: Any) -> Path:
-    return Path(str(value)).expanduser().resolve(strict=False)
+def _checkpoint_digest(value: Any) -> str | None:
+    if not isinstance(value, dict):
+        return None
+    digest = value.get("sha256")
+    return str(digest) if digest is not None else None
 
 
 def _validate_provenance(
@@ -76,14 +95,21 @@ def _validate_provenance(
     )
     checkpoint_sources = {
         "run_manifest.json": _checkpoint_value(manifest, "checkpoint"),
-        "train_result.json": _checkpoint_value(train_result, "model_path"),
+        "train_result.json": _train_checkpoint_value(train_result),
         "eval_results.json": _checkpoint_value(eval_result, "checkpoint"),
         "lm_eval_results.json": _checkpoint_value(lm_eval_result, "checkpoint"),
     }
     checkpoint_mismatches = {
-        source: _resolved_path(value)
+        source: resolved
         for source, value in checkpoint_sources.items()
-        if value is not None and _resolved_path(value) != expected_checkpoint
+        if value is not None
+        and (resolved := _resolved_checkpoint_path(run_path, value))
+        != expected_checkpoint
+    }
+    checkpoint_digests = {
+        source: digest
+        for source, value in checkpoint_sources.items()
+        if (digest := _checkpoint_digest(value)) is not None
     }
 
     fingerprint_sources = {
@@ -118,6 +144,25 @@ def _validate_provenance(
         problems.append(
             f"checkpoint mismatch ({details}; expected {expected_checkpoint})"
         )
+    if checkpoint_digests:
+        if not expected_checkpoint.is_file():
+            problems.append(f"checkpoint not found at {expected_checkpoint}")
+        else:
+            actual_digest = checkpoint_sha256(expected_checkpoint)
+            digest_mismatches = {
+                source: digest
+                for source, digest in checkpoint_digests.items()
+                if digest != actual_digest
+            }
+            if digest_mismatches:
+                details = ", ".join(
+                    f"{source} records {digest}"
+                    for source, digest in digest_mismatches.items()
+                )
+                problems.append(
+                    f"checkpoint digest mismatch ({details}; "
+                    f"actual SHA-256 is {actual_digest})"
+                )
     if fingerprint_mismatch:
         details = ", ".join(
             f"{source} records {fingerprint}"
@@ -131,6 +176,33 @@ def _validate_provenance(
             + ". Re-run evaluation for this checkpoint with its training "
             "dataset configuration and write the sidecars into this run directory."
         )
+
+
+def validate_evidence_payload(
+    run_dir: str | Path,
+    artifact: str,
+    payload: dict[str, Any],
+) -> None:
+    """Validate a proposed evaluation sidecar before it replaces evidence."""
+
+    if artifact not in {"eval_result", "lm_eval_result"}:
+        raise ValueError(f"Unsupported evidence artifact: {artifact}")
+    run_path = Path(run_dir).expanduser().resolve(strict=False)
+    manifest = _read_json(run_path / ARTIFACT_FILES["manifest"])
+    train_result = _read_json(run_path / ARTIFACT_FILES["train_result"])
+    eval_result = _read_json(run_path / ARTIFACT_FILES["eval_result"])
+    lm_eval_result = _read_json(run_path / ARTIFACT_FILES["lm_eval_result"])
+    if artifact == "eval_result":
+        eval_result = payload
+    else:
+        lm_eval_result = payload
+    _validate_provenance(
+        run_path,
+        manifest,
+        train_result,
+        eval_result,
+        lm_eval_result,
+    )
 
 
 def build_report(run_dir: str | Path) -> dict[str, Any]:
@@ -153,12 +225,16 @@ def build_report(run_dir: str | Path) -> dict[str, Any]:
         lm_eval_result,
     )
 
-    checkpoint = None
-    if train_result:
-        checkpoint = train_result.get("model_path")
+    checkpoint = _train_checkpoint_value(train_result)
+    if isinstance(checkpoint, dict):
+        checkpoint = checkpoint.get("path")
+    if checkpoint is None:
+        checkpoint = _checkpoint_value(manifest, "checkpoint")
+        if isinstance(checkpoint, dict):
+            checkpoint = checkpoint.get("path")
     if checkpoint is None:
         candidate = run_path / ARTIFACT_FILES["checkpoint"]
-        checkpoint = str(candidate.resolve(strict=False)) if candidate.exists() else None
+        checkpoint = ARTIFACT_FILES["checkpoint"] if candidate.exists() else None
 
     dataset_fingerprint = None
     if manifest:
@@ -282,5 +358,6 @@ __all__ = [
     "build_report",
     "refresh_run_report",
     "render_markdown",
+    "validate_evidence_payload",
     "write_reports",
 ]

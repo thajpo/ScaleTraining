@@ -145,6 +145,12 @@ Training writes the initial reports automatically. Validation and lm-eval
 refresh them after adding their result sidecars. `scripts/run_report.py` remains
 available as an explicit rebuild command.
 
+Checkpoint-bearing sidecars use the run-relative `model.pt` identity plus its
+SHA-256 digest, while retaining the original absolute path only as provenance.
+This keeps a complete run bundle verifiable after it is moved. Evaluation
+validates a proposed sidecar against the manifest, checkpoint contents, and
+existing evidence before atomically replacing the prior result.
+
 W&B is the detailed time-series record. Tracking schema version 1 uses
 `progress/tokens` as the common comparison axis and groups measurements under
 `train/*`, `validation/*`, `performance/*`, `compute/*`, and `moe/*`. The local

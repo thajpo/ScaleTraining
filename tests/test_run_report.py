@@ -1,8 +1,11 @@
 import importlib.util
 import json
 from pathlib import Path
+import shutil
 
 import pytest
+
+from scaletraining.util.artifacts import build_checkpoint_provenance
 
 
 _SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "run_report.py"
@@ -19,9 +22,14 @@ def _write_json(path, payload):
 
 def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
     run_dir = tmp_path / "run"
+    checkpoint = run_dir / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    provenance = build_checkpoint_provenance(checkpoint, run_dir)
     _write_json(
         run_dir / "run_manifest.json",
         {
+            "checkpoint": provenance,
             "fingerprint": "abc123",
             "status": "completed",
             "tracking": {
@@ -35,7 +43,8 @@ def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
         run_dir / "train_result.json",
         {
             "final_train_loss": 1.5,
-            "model_path": str(run_dir / "model.pt"),
+            "model_path": "model.pt",
+            "checkpoint": provenance,
             "dataset_fingerprint": "abc123",
             "tokens_processed": 8,
             "tokens_applied": 8,
@@ -48,7 +57,7 @@ def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
     _write_json(
         run_dir / "eval_results.json",
         {
-            "checkpoint": {"path": str(run_dir / "model.pt")},
+            "checkpoint": provenance,
             "dataset": {"fingerprint": "abc123"},
             "validation": {
                 "loss": 1.25,
@@ -64,6 +73,7 @@ def test_run_report_handles_complete_and_partial_run_dirs(tmp_path):
 
     assert report["summary"]["dataset_fingerprint"] == "abc123"
     assert report["summary"]["status"] == "completed"
+    assert report["summary"]["checkpoint"] == "model.pt"
     assert report["summary"]["final_train_loss"] == 1.5
     assert report["summary"]["training_progress"]["tokens_processed"] == 8
     assert report["summary"]["validation"]["tokens"] == 8
@@ -114,4 +124,53 @@ def test_run_report_rejects_dataset_fingerprint_mismatch(tmp_path):
         ValueError,
         match=r"dataset fingerprint mismatch.*training dataset configuration",
     ):
+        run_report.build_report(run_dir)
+
+
+def test_run_report_accepts_moved_run_directory(tmp_path):
+    original = tmp_path / "original" / "run"
+    checkpoint = original / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"portable checkpoint")
+    provenance = build_checkpoint_provenance(checkpoint, original)
+    _write_json(
+        original / "run_manifest.json",
+        {"checkpoint": provenance, "fingerprint": "abc123"},
+    )
+    _write_json(
+        original / "train_result.json",
+        {
+            "checkpoint": provenance,
+            "model_path": "model.pt",
+            "dataset_fingerprint": "abc123",
+        },
+    )
+    _write_json(
+        original / "eval_results.json",
+        {
+            "checkpoint": provenance,
+            "dataset": {"fingerprint": "abc123"},
+        },
+    )
+
+    moved = tmp_path / "archive" / "run"
+    moved.parent.mkdir(parents=True)
+    shutil.move(original, moved)
+
+    report = run_report.build_report(moved)
+
+    assert report["summary"]["checkpoint"] == "model.pt"
+    assert report["run_manifest"]["checkpoint"]["original_path"] == str(checkpoint)
+
+
+def test_run_report_rejects_checkpoint_digest_mismatch(tmp_path):
+    run_dir = tmp_path / "run"
+    checkpoint = run_dir / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"trusted checkpoint")
+    provenance = build_checkpoint_provenance(checkpoint, run_dir)
+    _write_json(run_dir / "run_manifest.json", {"checkpoint": provenance})
+    checkpoint.write_bytes(b"different checkpoint")
+
+    with pytest.raises(ValueError, match=r"checkpoint digest mismatch"):
         run_report.build_report(run_dir)

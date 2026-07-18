@@ -3,7 +3,9 @@ import contextlib
 from datetime import datetime, timezone
 import json
 import math
+import os
 from pathlib import Path
+import tempfile
 from typing import Any, Tuple
 
 import torch
@@ -11,7 +13,9 @@ from omegaconf import DictConfig, open_dict
 from transformers import AutoTokenizer, PreTrainedTokenizerFast
 
 from scaletraining.model.model import TransformerNetwork
+from scaletraining.reporting import validate_evidence_payload
 from scaletraining.util import find_latest_model_path
+from scaletraining.util.artifacts import build_checkpoint_provenance
 from scaletraining.util.device import resolve_device, uses_cuda
 from scaletraining.util.path_utils import config_fingerprint, get_cfg_subset
 
@@ -199,13 +203,15 @@ def build_eval_result(
     validation: dict[str, Any],
     *,
     checkpoint_path: str | Path | None = None,
+    run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
         {
             "schema_version": 1,
             "created_at": _utc_now(),
-            "checkpoint": {"path": checkpoint},
+            "checkpoint": build_checkpoint_provenance(checkpoint, evidence_dir),
             "dataset": _dataset_summary(cfg),
             "validation": validation,
             "config_summary": _config_summary(cfg),
@@ -219,13 +225,15 @@ def build_lm_eval_result(
     results: dict[str, Any],
     *,
     checkpoint_path: str | Path | None = None,
+    run_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     checkpoint = _checkpoint_path_from_cfg(cfg, checkpoint_path)
+    evidence_dir = checkpoint.parent if run_dir is None else Path(run_dir)
     return _jsonable(
         {
             "schema_version": 1,
             "created_at": _utc_now(),
-            "checkpoint": {"path": checkpoint},
+            "checkpoint": build_checkpoint_provenance(checkpoint, evidence_dir),
             "dataset": _dataset_summary(cfg),
             "tasks": tasks,
             "results": results,
@@ -236,8 +244,24 @@ def build_lm_eval_result(
 
 def _write_json(path: Path, payload: dict[str, Any]) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None and temporary_path.exists():
+            temporary_path.unlink()
     return path
 
 
@@ -248,7 +272,13 @@ def write_eval_result(
     checkpoint_path: str | Path | None = None,
 ) -> Path:
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
-    payload = build_eval_result(cfg, validation, checkpoint_path=checkpoint_path)
+    payload = build_eval_result(
+        cfg,
+        validation,
+        checkpoint_path=checkpoint_path,
+        run_dir=output_dir,
+    )
+    validate_evidence_payload(output_dir, "eval_result", payload)
     return _write_json(output_dir / "eval_results.json", payload)
 
 
@@ -260,7 +290,14 @@ def write_lm_eval_result(
     checkpoint_path: str | Path | None = None,
 ) -> Path:
     output_dir = resolve_eval_output_dir(cfg, checkpoint_path)
-    payload = build_lm_eval_result(cfg, tasks, results, checkpoint_path=checkpoint_path)
+    payload = build_lm_eval_result(
+        cfg,
+        tasks,
+        results,
+        checkpoint_path=checkpoint_path,
+        run_dir=output_dir,
+    )
+    validate_evidence_payload(output_dir, "lm_eval_result", payload)
     return _write_json(output_dir / "lm_eval_results.json", payload)
 
 

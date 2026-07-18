@@ -182,7 +182,11 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
             "incomplete_accumulation_microbatches": 0,
         },
     )
-    monkeypatch.setattr(train, "save_model", lambda *args, **kwargs: str(run_dir))
+    def save_checkpoint(*args, **kwargs):
+        (run_dir / "model.pt").write_bytes(b"checkpoint")
+        return str(run_dir)
+
+    monkeypatch.setattr(train, "save_model", save_checkpoint)
     monkeypatch.setattr(
         train,
         "update_run_manifest",
@@ -207,4 +211,8 @@ def test_completed_training_finalizes_wandb_with_success(tmp_path, monkeypatch):
     assert result["optimizer_steps"] == 1
     assert result["stop_reason"] == "token_budget_reached"
     assert result["dataset_fingerprint"]
+    assert result["model_path"] == "model.pt"
+    assert result["checkpoint"]["path"] == "model.pt"
+    assert result["checkpoint"]["original_path"] == str(run_dir / "model.pt")
     assert manifest_updates[0]["training_progress"]["tokens_processed"] == 2
+    assert manifest_updates[0]["checkpoint"] == result["checkpoint"]

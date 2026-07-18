@@ -1,6 +1,9 @@
 """Public utility surface for scaletraining."""
 
 from .artifacts import (
+    CHECKPOINT_FILENAME,
+    build_checkpoint_provenance,
+    checkpoint_sha256,
     create_run_dir,
     find_latest_model_path,
     read_metadata,
@@ -26,6 +29,9 @@ from .wandb_utils import (
 )
 
 __all__ = [
+    "CHECKPOINT_FILENAME",
+    "build_checkpoint_provenance",
+    "checkpoint_sha256",
     "clear_cuda_cache",
     "configure_rocm_and_sdp",
     "resolve_device",

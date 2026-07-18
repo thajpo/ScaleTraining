@@ -19,6 +19,7 @@ from scaletraining.model import TransformerNetwork
 from scaletraining.model.training_loop import training_run
 from scaletraining.reporting import refresh_run_report
 from scaletraining.util import (
+    build_checkpoint_provenance,
     clear_cuda_cache,
     configure_rocm_and_sdp,
     create_run_dir,
@@ -158,6 +159,7 @@ def run_training(cfg: DictConfig) -> float:
             float(stats["train_loss"][-1]) if stats.get("train_loss") else None
         )
         checkpoint_path = (run_dir / "model.pt").resolve(strict=False)
+        checkpoint = build_checkpoint_provenance(checkpoint_path, run_dir)
         training_progress = {
             key: stats[key]
             for key in (
@@ -184,7 +186,8 @@ def run_training(cfg: DictConfig) -> float:
             "n_head": int(cfg.model.n_head),
             "n_embed": int(cfg.model.n_embed),
             "run_dir": str(run_dir),
-            "model_path": str(checkpoint_path),
+            "model_path": checkpoint["path"],
+            "checkpoint": checkpoint,
             **training_progress,
         }
         with (Path.cwd() / "result.json").open("w", encoding="utf-8") as handle:
@@ -196,7 +199,7 @@ def run_training(cfg: DictConfig) -> float:
             run_dir,
             status="completed",
             finished_at=_utc_now(),
-            checkpoint={"path": str(checkpoint_path)},
+            checkpoint=checkpoint,
             training_progress=training_progress,
         )
         json_report, markdown_report = refresh_run_report(run_dir)

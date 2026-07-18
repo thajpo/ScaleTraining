@@ -1,7 +1,9 @@
 import contextlib
+import hashlib
 import json
 from types import SimpleNamespace
 
+import pytest
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -119,6 +121,9 @@ def test_evaluate_perplexity_uses_autocast_for_indexed_cuda(
 
 def test_write_eval_result_defaults_next_to_checkpoint(tmp_path):
     cfg = _cfg(tmp_path)
+    checkpoint = tmp_path / "run" / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
     metrics = {
         "loss": 1.25,
         "perplexity": 3.49,
@@ -133,7 +138,11 @@ def test_write_eval_result_defaults_next_to_checkpoint(tmp_path):
 
     assert result_path == tmp_path / "run" / "eval_results.json"
     assert payload["schema_version"] == 1
-    assert payload["checkpoint"]["path"] == str(tmp_path / "run" / "model.pt")
+    assert payload["checkpoint"] == {
+        "path": "model.pt",
+        "sha256": hashlib.sha256(b"checkpoint").hexdigest(),
+        "original_path": str(checkpoint),
+    }
     assert payload["dataset"]["fingerprint_short"]
     assert payload["validation"]["tokens"] == 2
     assert payload["config_summary"]["training"]["seed"] == 13
@@ -141,6 +150,9 @@ def test_write_eval_result_defaults_next_to_checkpoint(tmp_path):
 
 def test_write_lm_eval_result_preserves_tasks_and_results(tmp_path):
     cfg = _cfg(tmp_path)
+    checkpoint = tmp_path / "run" / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
 
     result_path = write_lm_eval_result(
         cfg,
@@ -152,3 +164,56 @@ def test_write_lm_eval_result_preserves_tasks_and_results(tmp_path):
     assert result_path == tmp_path / "run" / "lm_eval_results.json"
     assert payload["tasks"] == ["hellaswag"]
     assert payload["results"]["results"]["hellaswag"]["acc,none"] == 0.125
+
+
+def test_write_eval_result_rejects_before_replacing_valid_sidecar(tmp_path):
+    cfg = _cfg(tmp_path)
+    checkpoint = tmp_path / "run" / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    original_path = write_eval_result(cfg, {"loss": 1.0})
+    original_bytes = original_path.read_bytes()
+    original_payload = json.loads(original_bytes)
+    (checkpoint.parent / "run_manifest.json").write_text(
+        json.dumps({"fingerprint": original_payload["dataset"]["fingerprint"]}),
+        encoding="utf-8",
+    )
+    cfg.tokenizer.dataset_names = ["different/dataset"]
+
+    with pytest.raises(ValueError, match=r"dataset fingerprint mismatch"):
+        write_eval_result(cfg, {"loss": 2.0})
+
+    assert original_path.read_bytes() == original_bytes
+
+
+def test_write_lm_eval_result_rejects_before_replacing_valid_sidecar(tmp_path):
+    cfg = _cfg(tmp_path)
+    checkpoint = tmp_path / "run" / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    original_path = write_lm_eval_result(cfg, ["hellaswag"], {"results": {}})
+    original_bytes = original_path.read_bytes()
+    original_payload = json.loads(original_bytes)
+    (checkpoint.parent / "run_manifest.json").write_text(
+        json.dumps({"fingerprint": original_payload["dataset"]["fingerprint"]}),
+        encoding="utf-8",
+    )
+    cfg.tokenizer.dataset_names = ["different/dataset"]
+
+    with pytest.raises(ValueError, match=r"dataset fingerprint mismatch"):
+        write_lm_eval_result(cfg, ["hellaswag"], {"results": {"new": {}}})
+
+    assert original_path.read_bytes() == original_bytes
+
+
+def test_write_eval_result_rejects_output_directory_mismatch(tmp_path):
+    cfg = _cfg(tmp_path)
+    checkpoint = tmp_path / "run" / "model.pt"
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_bytes(b"checkpoint")
+    cfg.eval.output_dir = str(tmp_path / "different-run")
+
+    with pytest.raises(ValueError, match=r"does not belong to run directory"):
+        write_eval_result(cfg, {"loss": 1.0})
+
+    assert not (tmp_path / "different-run" / "eval_results.json").exists()

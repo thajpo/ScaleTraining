@@ -53,8 +53,13 @@ Hydra config
   train/validation/MoE comparison axis.
 - One local run directory links the W&B identity, configuration fingerprint,
   checkpoint, compact results, and automatically generated reports.
+- Checkpoint provenance uses a run-relative identity and SHA-256 content digest;
+  the recorded original absolute path is informational so archived run bundles
+  remain portable.
 - Evaluation sidecars refresh the reports next to the checkpoint instead of
   requiring a separate reporting step.
+- Evaluation sidecars are validated in memory and atomically replaced only when
+  their checkpoint and dataset provenance agrees with the existing run evidence.
 - The reviewer smoke path is CPU-only and uses local fixture text instead of
   HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,
