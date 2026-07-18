@@ -19,6 +19,16 @@ and reviewer-ready run evidence.
   curated research document only after real runs produce conclusions worth
   retaining.
 
+## Closeout Boundary
+
+- Prefer one controlled experiment and a clear written conclusion over adding
+  more training-platform features.
+- Do not add multi-GPU support merely to broaden the feature list.
+- Checkpoints are currently weights-only. Do not claim exact interruption
+  recovery without optimizer, progress, and RNG state plus an equivalence test.
+- Treat historical checkpoints without validation and report sidecars as
+  unverified artifacts, not experimental evidence.
+
 ## Default Validation
 
 Use lightweight checks unless the user explicitly asks for expensive runs:

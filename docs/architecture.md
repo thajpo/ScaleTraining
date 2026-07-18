@@ -64,6 +64,13 @@ Hydra config
 
 - Full training and benchmark runs can require a GPU and significant time.
 - CPU smoke runs prove wiring and artifact contracts, not model quality.
+- Checkpoints do not include optimizer, progress, or RNG state, so exact
+  interruption/resume equivalence is not supported.
+- Historical checkpoints without validation and report sidecars are not
+  evidence for model-quality claims.
+- The repository still needs one controlled experiment and written conclusion;
+  further platform expansion is not the closeout goal.
+- Multi-GPU support is intentionally outside the closeout scope.
 - Some eval paths are still evolving; do not oversell benchmark completeness.
 - Large runs should be represented by explicit run reports rather than broad
   scale claims.

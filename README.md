@@ -150,19 +150,31 @@ W&B is the detailed time-series record. Tracking schema version 1 uses
 `train/*`, `validation/*`, `performance/*`, `compute/*`, and `moe/*`. The local
 bundle intentionally does not duplicate that history.
 
-## Wrap-Up Evidence
+## Closeout Status
 
-The final project artifact should be a small checked-in summary of several completed runs, not raw checkpoints. The intended format is a Markdown table in this README backed by compact JSON/Markdown reports with:
+The training harness is substantially complete: the quick tests, syntax
+compilation, and offline CPU prepare → train → evaluate → report path validate
+the software and artifact contracts. This is strong systems evidence, but it is
+not yet a differentiated experimental conclusion.
 
-- run id and command summary,
-- dataset fingerprint and token budget,
-- model shape and optimizer,
-- final train loss,
-- validation loss/perplexity,
-- benchmark results when available,
-- notes about hardware and runtime.
+Known limitations:
 
-Raw `outputs/` directories and model weights stay ignored. Only compact evidence summaries should be committed.
+- Checkpoints contain model weights and model configuration, but not optimizer,
+  token-progress, or RNG state. Exact interruption/resume equivalence is not
+  supported.
+- Historical checkpoints that lack validation and report sidecars are not
+  treated as experimental evidence.
+- CPU smoke runs prove wiring and reproducibility surfaces, not model quality.
+
+The remaining closeout target is one controlled, modest experiment with fixed
+fingerprints, token budgets, evaluation settings, and appropriate seeds. Keep
+its detailed history in W&B, retain the compact run reports, and write down a
+specific conclusion. Any follow-up tooling should directly serve that study;
+do not add multi-GPU or generic platform features simply to expand the feature
+list.
+
+Raw `outputs/` directories and model weights stay ignored. Only compact,
+reviewable evidence summaries should be committed.
 
 ## Configuration
 
