@@ -151,6 +151,20 @@ def test_run_report_accepts_moved_run_directory(tmp_path):
         {
             "checkpoint": provenance,
             "dataset": {"fingerprint": "abc123"},
+            "config_summary": {
+                "eval": {"output_dir": str(original)}
+            },
+        },
+    )
+    _write_json(
+        original / "lm_eval_results.json",
+        {
+            "checkpoint": provenance,
+            "dataset": {"fingerprint": "abc123"},
+            "tasks": ["hellaswag"],
+            "config_summary": {
+                "eval": {"output_dir": str(original)}
+            },
         },
     )
 
@@ -180,11 +194,18 @@ def test_run_report_accepts_moved_run_directory(tmp_path):
     assert persisted_report["run_manifest"]["checkpoint"]["original_path"] == str(
         checkpoint
     )
+    for sidecar in ("eval_result", "lm_eval_result"):
+        eval_summary = persisted_report[sidecar]["config_summary"]["eval"]
+        assert eval_summary["output_dir"] == "."
+        assert eval_summary["original_output_dir"] == str(original)
     assert "- Run directory: `.`" in markdown
     assert f"at `{original / 'model.pt'}`" not in markdown
 
     rebuilt_report = run_report.build_report(moved)
     assert rebuilt_report["summary"]["checkpoint"] == "model.pt"
+    assert rebuilt_report["eval_result"]["config_summary"]["eval"][
+        "output_dir"
+    ] == "."
 
 
 def test_run_report_rejects_checkpoint_digest_mismatch(tmp_path):

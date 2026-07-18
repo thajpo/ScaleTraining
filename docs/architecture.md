@@ -60,7 +60,10 @@ Hydra config
 - The run directory exists before tracking or training begins. Its manifest
   records the requested and resolved device, an explicit W&B availability
   state, and a `running` to `completed`/`failed` lifecycle; failures retain the
-  original error and a partial report when finalization succeeds.
+  original error and a partial report when finalization succeeds. Manifest
+  updates sync a complete temporary file before atomically replacing the prior
+  valid file, then sync the containing directory. New manifests honor the
+  process umask, while updates preserve existing permissions.
 - Terminal progress distinguishes processed tokens from tokens applied by a
   completed optimizer step, records the stop reason, and exposes any unfinished
   gradient-accumulation window.
@@ -72,8 +75,13 @@ Hydra config
 - Evaluation sidecars are validated in memory and atomically replaced only when
   their checkpoint and dataset provenance agrees with the existing run evidence.
 - Evaluation output belongs in the checkpoint's run directory. The generated
-  report uses run-relative paths so a complete evidence directory can be moved
-  and revalidated without rewriting its canonical identities.
+  report uses run-relative paths, including `.` for nested eval output-directory
+  summaries, so a complete evidence directory can be moved and revalidated
+  without rewriting its canonical identities. Original absolute paths remain
+  informational provenance.
+- The run-local `train_result.json` records `run_dir` as `.` and `model_path` as
+  `model.pt`, while Hydra's job-level `result.json` exposes absolute values for
+  those fields to aggregation consumers.
 - The reviewer smoke path is CPU-only and uses local fixture text instead of
   HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,

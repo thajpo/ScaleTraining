@@ -89,6 +89,7 @@ def _portable_payload(
     payload: dict[str, Any] | None,
     *,
     train_result: bool = False,
+    evidence_result: bool = False,
 ) -> dict[str, Any] | None:
     if payload is None:
         return None
@@ -111,6 +112,22 @@ def _portable_payload(
             and _resolved_checkpoint_path(run_path, model_path) == expected_checkpoint
         ):
             portable["model_path"] = ARTIFACT_FILES["checkpoint"]
+    if evidence_result:
+        config_summary = portable.get("config_summary")
+        eval_summary = (
+            config_summary.get("eval")
+            if isinstance(config_summary, dict)
+            else None
+        )
+        if isinstance(eval_summary, dict):
+            output_dir = eval_summary.get("output_dir")
+            if output_dir is not None and str(output_dir).strip():
+                output_path = Path(str(output_dir)).expanduser()
+                if output_path.is_absolute():
+                    eval_summary.setdefault(
+                        "original_output_dir", str(output_path)
+                    )
+                eval_summary["output_dir"] = "."
     return portable
 
 
@@ -300,7 +317,11 @@ def validate_evidence_payload(
 
 
 def build_report(run_dir: str | Path) -> dict[str, Any]:
-    """Build a portable report, rejecting inconsistent available sidecars."""
+    """Build a run-relative report, rejecting inconsistent available sidecars.
+
+    Nested evaluation output directories are represented as ``.``; an original
+    absolute value is retained only as provenance.
+    """
 
     run_path = Path(run_dir).expanduser().resolve(strict=False)
     artifacts = {
@@ -374,8 +395,12 @@ def build_report(run_dir: str | Path) -> dict[str, Any]:
         "train_result": _portable_payload(
             run_path, train_result, train_result=True
         ),
-        "eval_result": _portable_payload(run_path, eval_result),
-        "lm_eval_result": _portable_payload(run_path, lm_eval_result),
+        "eval_result": _portable_payload(
+            run_path, eval_result, evidence_result=True
+        ),
+        "lm_eval_result": _portable_payload(
+            run_path, lm_eval_result, evidence_result=True
+        ),
     }
 
 

@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import secrets
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -29,6 +31,45 @@ def checkpoint_sha256(path: str | Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _write_run_manifest(path: Path, manifest: dict[str, Any]) -> None:
+    """Durably replace a manifest without truncating its valid predecessor."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    while True:
+        temporary_path = path.with_name(
+            f".{path.name}.{secrets.token_hex(8)}.tmp"
+        )
+        try:
+            file_descriptor = os.open(
+                temporary_path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o666,
+            )
+        except FileExistsError:
+            continue
+        break
+    try:
+        with os.fdopen(file_descriptor, "w", encoding="utf-8") as handle:
+            if existing_mode is not None:
+                os.fchmod(handle.fileno(), existing_mode)
+            json.dump(manifest, handle, indent=2, sort_keys=True)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+        directory_descriptor = os.open(
+            path.parent,
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+        )
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+    except BaseException:
+        temporary_path.unlink(missing_ok=True)
+        raise
 
 
 def build_checkpoint_provenance(
@@ -72,7 +113,10 @@ def read_metadata(path: str) -> Dict[str, Any]:
 
 
 def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = None) -> str:
-    """Write a schema-v1 run manifest, defaulting its lifecycle to ``created``."""
+    """Durably write a schema-v1 manifest, honoring the process umask.
+
+    Its lifecycle defaults to ``created``.
+    """
     os.makedirs(out_dir, exist_ok=True)
     training_cfg = cfg.training
     optimizer_cfg = cfg.optimizer
@@ -153,14 +197,17 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
     }
     if extra:
         manifest.update(extra)
-    manifest_path = os.path.join(out_dir, "run_manifest.json")
-    with open(manifest_path, "w", encoding="utf-8") as handle:
-        json.dump(manifest, handle, indent=2, sort_keys=True)
-    return manifest_path
+    manifest_path = Path(out_dir) / "run_manifest.json"
+    _write_run_manifest(manifest_path, manifest)
+    return str(manifest_path)
 
 
 def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
-    """Shallow-update manifest lifecycle/evidence fields without rebuilding it."""
+    """Durably shallow-update a manifest while preserving its prior permissions.
+
+    Serialization and pre-replacement failures leave the previous valid manifest
+    in place.
+    """
 
     manifest_path = Path(out_dir) / "run_manifest.json"
     if not manifest_path.exists():
@@ -168,8 +215,7 @@ def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
     with manifest_path.open("r", encoding="utf-8") as handle:
         manifest = json.load(handle)
     manifest.update(updates)
-    with manifest_path.open("w", encoding="utf-8") as handle:
-        json.dump(manifest, handle, indent=2, sort_keys=True)
+    _write_run_manifest(manifest_path, manifest)
     return manifest_path
 
 
