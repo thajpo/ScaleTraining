@@ -1,4 +1,6 @@
 import json
+import os
+import stat
 from pathlib import Path
 
 import pytest
@@ -141,6 +143,48 @@ def test_failed_manifest_replace_preserves_previous_manifest(tmp_path, monkeypat
 
     assert (run_dir / "run_manifest.json").read_bytes() == original
     assert not list(run_dir.glob(".run_manifest.json.*.tmp"))
+
+
+def test_new_manifest_honors_process_umask(tmp_path):
+    cfg = _cfg(tmp_path)
+    run_dir = create_run_dir(cfg)
+    previous_umask = os.umask(0o027)
+    try:
+        save_run_manifest(cfg, str(run_dir))
+    finally:
+        os.umask(previous_umask)
+
+    mode = stat.S_IMODE((run_dir / "run_manifest.json").stat().st_mode)
+    assert mode == 0o640
+
+
+def test_manifest_update_preserves_existing_mode(tmp_path):
+    cfg = _cfg(tmp_path)
+    run_dir = create_run_dir(cfg)
+    save_run_manifest(cfg, str(run_dir))
+    manifest_path = run_dir / "run_manifest.json"
+    manifest_path.chmod(0o664)
+
+    update_run_manifest(run_dir, status="completed")
+
+    assert stat.S_IMODE(manifest_path.stat().st_mode) == 0o664
+
+
+def test_manifest_replace_fsyncs_parent_directory(tmp_path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    run_dir = create_run_dir(cfg)
+    synced_modes = []
+    real_fsync = os.fsync
+
+    def record_fsync(file_descriptor):
+        synced_modes.append(os.fstat(file_descriptor).st_mode)
+        real_fsync(file_descriptor)
+
+    monkeypatch.setattr("scaletraining.util.artifacts.os.fsync", record_fsync)
+
+    save_run_manifest(cfg, str(run_dir))
+
+    assert any(stat.S_ISDIR(mode) for mode in synced_modes)
 
 
 def test_manifest_preserves_requested_cuda_after_cpu_fallback(tmp_path, monkeypatch):

@@ -4,7 +4,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import tempfile
+import secrets
+import stat
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -36,18 +37,36 @@ def _write_run_manifest(path: Path, manifest: dict[str, Any]) -> None:
     """Durably replace a manifest without truncating its valid predecessor."""
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    file_descriptor, temporary_name = tempfile.mkstemp(
-        dir=path.parent,
-        prefix=f".{path.name}.",
-        suffix=".tmp",
-    )
-    temporary_path = Path(temporary_name)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    while True:
+        temporary_path = path.with_name(
+            f".{path.name}.{secrets.token_hex(8)}.tmp"
+        )
+        try:
+            file_descriptor = os.open(
+                temporary_path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o666,
+            )
+        except FileExistsError:
+            continue
+        break
     try:
         with os.fdopen(file_descriptor, "w", encoding="utf-8") as handle:
+            if existing_mode is not None:
+                os.fchmod(handle.fileno(), existing_mode)
             json.dump(manifest, handle, indent=2, sort_keys=True)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary_path, path)
+        directory_descriptor = os.open(
+            path.parent,
+            os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+        )
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
     except BaseException:
         temporary_path.unlink(missing_ok=True)
         raise
