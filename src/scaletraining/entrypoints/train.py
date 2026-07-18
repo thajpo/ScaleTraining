@@ -74,7 +74,11 @@ def _record_failed_run(run_dir: Path, exc: BaseException) -> None:
 
 
 def run_training(cfg: DictConfig) -> float:
-    """Execute one run, finalize its evidence lifecycle, and return its objective."""
+    """Execute one run, finalize evidence, and return its objective.
+
+    The bundled result records ``run_dir`` as ``.`` and ``model_path`` as
+    ``model.pt``; Hydra's job result uses absolute values for those fields.
+    """
 
     cfg = load_project_config(cfg)
     set_random_seed(int(cfg.training.seed))

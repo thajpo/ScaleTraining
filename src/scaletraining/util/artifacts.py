@@ -113,7 +113,10 @@ def read_metadata(path: str) -> Dict[str, Any]:
 
 
 def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = None) -> str:
-    """Write a schema-v1 run manifest, defaulting its lifecycle to ``created``."""
+    """Durably write a schema-v1 manifest, honoring the process umask.
+
+    Its lifecycle defaults to ``created``.
+    """
     os.makedirs(out_dir, exist_ok=True)
     training_cfg = cfg.training
     optimizer_cfg = cfg.optimizer
@@ -200,7 +203,11 @@ def save_run_manifest(cfg: Any, out_dir: str, extra: Optional[Dict[str, Any]] = 
 
 
 def update_run_manifest(out_dir: str | Path, **updates: Any) -> Path:
-    """Shallow-update manifest lifecycle/evidence fields without rebuilding it."""
+    """Durably shallow-update a manifest while preserving its prior permissions.
+
+    Serialization and pre-replacement failures leave the previous valid manifest
+    in place.
+    """
 
     manifest_path = Path(out_dir) / "run_manifest.json"
     if not manifest_path.exists():

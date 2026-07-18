@@ -317,7 +317,11 @@ def validate_evidence_payload(
 
 
 def build_report(run_dir: str | Path) -> dict[str, Any]:
-    """Build a portable report, rejecting inconsistent available sidecars."""
+    """Build a run-relative report, rejecting inconsistent available sidecars.
+
+    Nested evaluation output directories are represented as ``.``; an original
+    absolute value is retained only as provenance.
+    """
 
     run_path = Path(run_dir).expanduser().resolve(strict=False)
     artifacts = {

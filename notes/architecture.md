@@ -92,9 +92,15 @@ Entrypoints map to steps as follows:
   `model_config.json`, `train_result.json`, optional evaluation sidecars, and
   automatically refreshed JSON/Markdown reports.
 - Manifests transition from `running` to `completed`, or to `failed` with error
-  details. Reports use `.` and run-relative artifact paths so a complete bundle
-  remains verifiable after moving; absolute `original_path` fields are only
-  provenance.
+  details. Their updates sync a complete temporary file before atomically
+  replacing the previous valid file, then sync the containing directory. New
+  files honor the process umask; updates keep existing permissions.
+- Reports use `.` for the run directory and nested eval output-directory
+  summaries, plus run-relative artifact paths, so a complete bundle remains
+  verifiable after moving; original absolute paths are only provenance.
+- The bundled `train_result.json` records `run_dir` as `.` and `model_path` as
+  `model.pt`; Hydra's job-level `result.json` uses absolute values for those
+  fields so aggregators can consume them directly.
 
 #### Hashing / fingerprinting contracts
 - Fingerprints are computed in `path_utils.config_fingerprint` from a subset of config fields

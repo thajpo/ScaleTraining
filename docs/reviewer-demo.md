@@ -61,8 +61,10 @@ uv run python scripts/run_report.py --run-dir outputs/<run>
 Evaluation defaults to writing beside the selected checkpoint. If overriding
 `eval.output_dir`, point it at that same checkpoint-owning run directory; an
 unrelated directory is rejected before any valid sidecar is replaced. Reports
-show lifecycle state, W&B identity, processed versus optimizer-applied tokens,
-stop reason, and incomplete gradient accumulation when present.
+normalize this nested output-directory summary to `.` so the bundle remains
+portable, while retaining an original absolute value only as provenance. Reports
+also show lifecycle state, W&B identity, processed versus optimizer-applied
+tokens, stop reason, and incomplete gradient accumulation when present.
 
 ## Heavier Work To Skip In A Review
 
