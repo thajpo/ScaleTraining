@@ -18,7 +18,7 @@ a validation or generalization claim.
 ![Comparable training loss near nine million tokens](research/figures/auxiliary-lr-common-horizon.svg)
 
 The [experimental closeout](research/scale_training_closeout.md) preserves the
-full run table, corrected historical optimizer semantics, checkpoint audit,
+six-run result table, corrected historical optimizer semantics, checkpoint audit,
 limitations, reproduction commands, and supplementary terminal-outcome plot.
 
 ## What This Demonstrates
@@ -37,7 +37,7 @@ limitations, reproduction commands, and supplementary terminal-outcome plot.
 - [docs/architecture.md](docs/architecture.md): reviewer-facing architecture and engineering claims.
 - [docs/reviewer-demo.md](docs/reviewer-demo.md): non-heavy commands to inspect the package and tests.
 - [research/scale_training_closeout.md](research/scale_training_closeout.md): recovered experiment, plots, source run IDs, and archive decision.
-- [notes/architecture.md](notes/architecture.md): deeper internal design notes and cleanup plan.
+- [notes/architecture.md](notes/architecture.md): deeper internal design notes and closeout record.
 
 ## Quick Verification
 
@@ -213,7 +213,10 @@ recorded under `model/*`:
 - `model/total_params`, `model/trainable_params`, and fp32/bf16 size estimates
   are fixed metadata in W&B history and summary.
 
-The local bundle intentionally does not duplicate this detailed history.
+Ordinary run bundles intentionally do not duplicate this detailed history. The
+closeout is a bounded exception: it commits normalized loss histories for the
+six selected legacy runs so its plots remain reproducible without the original
+W&B archives.
 
 ## Closeout Status
 
@@ -240,8 +243,9 @@ Any future work should begin with a new, explicitly scoped research question
 and should use the current evidence schema from the start. Do not add multi-GPU
 or generic platform features simply to expand the feature list.
 
-Raw `outputs/` directories and model weights stay ignored. Only compact,
-reviewable evidence summaries should be committed.
+Raw `outputs/` directories and model weights stay ignored. Commit only bounded,
+reviewer-facing evidence such as run reports and the normalized histories and
+plots used by this closeout.
 
 ## Configuration
 
@@ -301,6 +305,8 @@ Implemented and tested in the quick suite:
 - reproducible eval sidecars and run reports,
 - configured training seed for controlled comparisons,
 - offline CPU smoke path over local fixture data,
+- legacy archive parsing, control validation, static plot rendering, and
+  checkpoint schema auditing,
 - batch packing,
 - optimizer smoke behavior.
 

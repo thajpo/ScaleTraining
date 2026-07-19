@@ -21,17 +21,17 @@ and reviewer-ready run evidence.
 
 ## Closeout Boundary
 
-- Prefer one controlled experiment and a clear written conclusion over adding
-  more training-platform features.
+- The bounded historical closeout is complete. Begin further work only from a
+  new, explicit research question rather than adding training-platform features.
 - Do not add multi-GPU support merely to broaden the feature list.
 - Checkpoints are currently weights-only. Do not claim exact interruption
   recovery without optimizer, progress, and RNG state plus an equivalence test.
 - Treat historical checkpoints without validation and report sidecars as
   unverified artifacts, not experimental evidence.
-- Treat `research/scale_training_closeout.md` and its generated SVGs as the
-  durable historical conclusion. Regenerate them through the committed scripts;
-  do not hand-edit generated data or strengthen its bounded claims without new
-  evidence.
+- Treat `research/scale_training_closeout.md` as the durable historical
+  conclusion and the committed research JSON and SVGs as generated evidence.
+  Regenerate those artifacts through the committed scripts; do not hand-edit
+  them or strengthen the closeout's bounded claims without new evidence.
 
 ## Default Validation
 

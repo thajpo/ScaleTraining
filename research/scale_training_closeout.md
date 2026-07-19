@@ -25,8 +25,8 @@ is not a validation, benchmark, or generalization claim.
 
 ## What Was Recovered
 
-The local archive contained 109 W&B run directories and 69 weights-only
-checkpoints. Before this closeout, none of the checkpoints had validation
+The local archive contained 109 W&B run directories and 69 historical
+checkpoint files. Before this closeout, none of the checkpoints had validation
 sidecars or canonical run reports.
 
 | Classification | Recovered count |
@@ -34,7 +34,9 @@ sidecars or canonical run reports.
 | W&B archives with readable configs | 109 |
 | Archives with a history file present (presence only) | 109 |
 | Selected histories successfully parsed | 6 |
-| Runs with a finite terminal training loss | 70 |
+| Runs with a finite terminal training loss in W&B summary | 70 |
+| Historical checkpoint files discovered | 69 |
+| Representative checkpoints schema-audited | 3 |
 | `tiny-stories-base` project | 83 |
 | `fine-web-pretrain` project | 18 |
 | `logits_sweep_tinystories` project | 8 |
@@ -49,7 +51,7 @@ sidecars or canonical run reports.
 | 1M / 10M / 40M / 80M token budgets | 8 / 55 / 42 / 4 |
 | Seed absent from legacy config | 109 |
 
-The complete machine-readable classification is in
+The complete machine-readable run classification is in
 [`data/legacy_run_inventory.json`](data/legacy_run_inventory.json). It retains
 run IDs, projects, datasets, architecture, effective optimizer wiring, token
 budget, terminal metrics, and the historical Git commit when available.
@@ -136,8 +138,8 @@ would create a new experiment, not recover the old one.
   revision and prepared validation artifact were not.
 - Historical throughput values are excluded. The legacy timer measured only a
   portion of the update path and cannot support throughput comparisons.
-- The checkpoints contain weights only—not optimizer, progress, or RNG state—so
-  they do not support exact interruption recovery.
+- The three audited checkpoints contain weights only—not optimizer, progress,
+  or RNG state—so they do not support exact interruption recovery.
 
 ## Reproduction
 
@@ -164,9 +166,9 @@ uv run python scripts/audit_legacy_checkpoints.py \
   --outputs-root /path/to/ScaleTraining/outputs
 ```
 
-The parser and SVG renderer are covered by small committed fixtures under
-`tests/fixtures/legacy_runs/`. No new model training was performed for this
-closeout.
+The parser, SVG renderer, and checkpoint auditor are covered by small committed
+fixtures under `tests/fixtures/legacy_runs/`. No new model training was
+performed for this closeout.
 
 ## Archive Decision
 

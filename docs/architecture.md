@@ -26,6 +26,26 @@ Hydra config
 -> qualitative generation from checkpoint
 ```
 
+## Historical Closeout Flow
+
+```text
+ignored local W&B archives
+-> recover_legacy_runs.py
+   -> legacy_run_inventory.json
+   -> tiny_stories_aux_lr_sweep.json
+      -> plot_legacy_experiment.py -> three static SVGs
+
+ignored historical outputs + selected sweep JSON
+-> audit_legacy_checkpoints.py -> checkpoint_compatibility.json
+
+committed JSON + SVG evidence -> scale_training_closeout.md + README.md
+```
+
+This recovery path is separate from the current training and evaluation
+runtime. In particular, it records the selected checkpoints' legacy schema and
+current incompatibility instead of migrating their weights or retrospectively
+evaluating them.
+
 ## Main Boundaries
 
 - `conf/`: Hydra config groups for model, training, tokenizer, optimizer,
@@ -87,7 +107,8 @@ Hydra config
 - The reviewer smoke path is CPU-only and uses local fixture text instead of
   HuggingFace network access.
 - The repo has tests for package entrypoints, data processing, model behavior,
-  optimizer behavior, and training-loop utilities.
+  optimizer behavior, training-loop utilities, and the legacy recovery, plot,
+  and checkpoint-audit scripts.
 
 ## Current Limits
 
