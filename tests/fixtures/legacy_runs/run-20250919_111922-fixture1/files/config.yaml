@@ -1,0 +1,37 @@
+_wandb:
+  value:
+    e:
+      writer:
+        startedAt: "2025-09-19T15:19:22Z"
+        git:
+          commit: fixture-commit
+logging:
+  value:
+    wandb_project_name: tiny-stories-base
+model:
+  value:
+    accum_steps: 4
+    attn_dropout: 0.2
+    batch_size: 32
+    lr: 0.03
+    lr_schedule: cosine
+    max_seq_len: 1000
+    max_train_tokens: 40000000
+    muon_lr: 0.02
+    n_embed: 512
+    n_head: 8
+    n_hidden: 2048
+    n_layer: 5
+    primary_optimizer: muon
+    resid_dropout: 0.2
+    use_baseline_adam: false
+    use_moe: false
+    warmup_tokens: 1000000
+sweep:
+  value:
+    name: muon_lr
+tokenizer:
+  value:
+    dataset_tag: ""
+    hf_dataset_names: roneneldan/TinyStories
+    tokenizer_name: EleutherAI/gpt-neo-125M

@@ -24,4 +24,8 @@ result.json
 datasets/
 data/
 
+# Compact, reproducible research evidence is intentionally versioned.
+!research/data/
+!research/data/*.json
+
 datset_explorer.ipynb

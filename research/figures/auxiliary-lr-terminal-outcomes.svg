@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="500" viewBox="0 0 860 500" role="img">
+<style>text{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#20242b}.axis{font-size:13px}.label{font-size:14px;font-weight:600}.title{font-size:24px;font-weight:700}.subtitle{font-size:14px;fill:#565d68}.legend{font-size:13px}</style>
+<rect width="860" height="500" fill="#fbfaf7"/>
+<text x="82.0" y="38.0" class="title">Terminal outcomes across auxiliary LR</text>
+<text x="82.0" y="64.0" class="subtitle">Raw final train loss; labels show observed tokens before termination</text>
+<line x1="82.0" y1="92" x2="82.0" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="82.0" y="449.0" class="axis" text-anchor="middle">0.005</text>
+<line x1="249.3" y1="92" x2="249.3" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="249.3" y="449.0" class="axis" text-anchor="middle">0.01</text>
+<line x1="470.4" y1="92" x2="470.4" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="470.4" y="449.0" class="axis" text-anchor="middle">0.025</text>
+<line x1="514.4" y1="92" x2="514.4" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="514.4" y="449.0" class="axis" text-anchor="middle">0.03</text>
+<line x1="718.9" y1="92" x2="718.9" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="718.9" y="449.0" class="axis" text-anchor="middle">0.07</text>
+<line x1="805.0" y1="92" x2="805.0" y2="425" stroke="#d8d6d0" stroke-width="1"/>
+<text x="805.0" y="449.0" class="axis" text-anchor="middle">0.1</text>
+<line x1="82" y1="391.7" x2="805" y2="391.7" stroke="#d8d6d0" stroke-width="1"/>
+<text x="70.0" y="395.7" class="axis" text-anchor="end">3</text>
+<line x1="82" y1="325.1" x2="805" y2="325.1" stroke="#d8d6d0" stroke-width="1"/>
+<text x="70.0" y="329.1" class="axis" text-anchor="end">4</text>
+<line x1="82" y1="258.5" x2="805" y2="258.5" stroke="#d8d6d0" stroke-width="1"/>
+<text x="70.0" y="262.5" class="axis" text-anchor="end">5</text>
+<line x1="82" y1="191.9" x2="805" y2="191.9" stroke="#d8d6d0" stroke-width="1"/>
+<text x="70.0" y="195.9" class="axis" text-anchor="end">6</text>
+<line x1="82" y1="125.3" x2="805" y2="125.3" stroke="#d8d6d0" stroke-width="1"/>
+<text x="70.0" y="129.3" class="axis" text-anchor="end">7</text>
+<rect x="82" y="92" width="723" height="333" fill="none" stroke="#20242b" stroke-width="1.5"/>
+<polyline points="82.0,376.5 249.3,382.5 470.4,401.1 514.4,402.5 718.9,378.2 805.0,123.4" fill="none" stroke="#707782" stroke-width="2" stroke-dasharray="5 5"/>
+<circle cx="82.0" cy="376.5" r="7" fill="#2a9d8f" stroke="white" stroke-width="2"/>
+<text x="93.0" y="364.5" class="label" text-anchor="start">3.228</text>
+<text x="93.0" y="384.5" class="legend" text-anchor="start">37.9M tokens</text>
+<circle cx="249.3" cy="382.5" r="7" fill="#6a4c93" stroke="white" stroke-width="2"/>
+<text x="260.3" y="370.5" class="label" text-anchor="start">3.138</text>
+<text x="260.3" y="390.5" class="legend" text-anchor="start">38.9M tokens</text>
+<circle cx="470.4" cy="401.1" r="7" fill="#30638e" stroke="white" stroke-width="2"/>
+<text x="459.4" y="389.1" class="label" text-anchor="end">2.859</text>
+<text x="459.4" y="409.1" class="legend" text-anchor="end">40.0M tokens</text>
+<circle cx="514.4" cy="402.5" r="7" fill="#00798c" stroke="white" stroke-width="2"/>
+<text x="525.4" y="390.5" class="label" text-anchor="start">2.837</text>
+<text x="525.4" y="410.5" class="legend" text-anchor="start">36.7M tokens</text>
+<circle cx="718.9" cy="378.2" r="7" fill="#edae49" stroke="white" stroke-width="2"/>
+<text x="707.9" y="366.2" class="label" text-anchor="end">3.203</text>
+<text x="707.9" y="386.2" class="legend" text-anchor="end">29.5M tokens</text>
+<circle cx="805.0" cy="123.4" r="7" fill="#d1495b" stroke="white" stroke-width="2"/>
+<text x="794.0" y="111.4" class="label" text-anchor="end">7.028</text>
+<text x="794.0" y="131.4" class="legend" text-anchor="end">9.8M tokens</text>
+<text x="443.5" y="476.0" class="label" text-anchor="middle">AdamW-managed auxiliary parameter LR (log scale)</text>
+<text x="22" y="258.5" class="label" text-anchor="middle" transform="rotate(-90 22 258.5)">Terminal train loss / token</text>
+</svg>

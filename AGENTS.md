@@ -28,6 +28,10 @@ and reviewer-ready run evidence.
   recovery without optimizer, progress, and RNG state plus an equivalence test.
 - Treat historical checkpoints without validation and report sidecars as
   unverified artifacts, not experimental evidence.
+- Treat `research/scale_training_closeout.md` and its generated SVGs as the
+  durable historical conclusion. Regenerate them through the committed scripts;
+  do not hand-edit generated data or strengthen its bounded claims without new
+  evidence.
 
 ## Default Validation
 

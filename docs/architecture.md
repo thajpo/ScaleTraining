@@ -40,6 +40,8 @@ Hydra config
   integration.
 - `tests/`: focused tests across entrypoints, model behavior, data processing,
   training loop, inference, and utility contracts.
+- `research/`: committed normalized legacy histories, dependency-free static
+  plots, checkpoint compatibility evidence, and the experimental closeout.
 
 ## Engineering Claims
 
@@ -94,9 +96,12 @@ Hydra config
 - Checkpoints do not include optimizer, progress, or RNG state, so exact
   interruption/resume equivalence is not supported.
 - Historical checkpoints without validation and report sidecars are not
-  evidence for model-quality claims.
-- The repository still needs one controlled experiment and written conclusion;
-  further platform expansion is not the closeout goal.
+  evidence for model-quality claims. The closeout records their integrity and
+  runtime compatibility separately from evaluation.
+- The recovered TinyStories auxiliary-LR study is training-only, unreplicated,
+  and has unequal terminal horizons. Its conclusion is deliberately bounded.
+- The repository's closeout is complete; further platform expansion should be
+  justified by a new research question.
 - Multi-GPU support is intentionally outside the closeout scope.
 - Some eval paths are still evolving; do not oversell benchmark completeness.
 - Large runs should be represented by explicit run reports rather than broad

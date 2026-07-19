@@ -1,0 +1,91 @@
+{
+  "audit_kind": "legacy_checkpoint_compatibility",
+  "checkpoints": [
+    {
+      "architecture_integrity": {
+        "problems": [],
+        "status": "compatible_with_recorded_config"
+      },
+      "bytes": 165974661,
+      "checkpoint_file": "model.pt",
+      "checkpoint_run_dir": "v=004acfd1__20250919T151921Z",
+      "current_runtime_compatibility": {
+        "current_dual_layer_norm_keys": 0,
+        "historical_shared_layer_norm_keys": 10,
+        "reason": "The 2025 checkpoint has one shared LayerNorm per transformer block (.ln); the current model has distinct attention and MLP LayerNorms (.ln1 and .ln2). Loading it into the current runtime would require a scientifically consequential migration rule.",
+        "status": "incompatible"
+      },
+      "evaluation": {
+        "reason": "The exact historical validation artifact and dataset revision are not preserved, the seed is missing, and the current runtime is not architecture-compatible. A new evaluation would not be comparable enough to strengthen the recovered claim.",
+        "status": "not_run"
+      },
+      "payload_keys": [
+        "state_dict"
+      ],
+      "run_id": "zrnf1np4",
+      "sha256": "9b40b3794cb4d0c15c47cf0e238860fd9cc010b818de58c43fe11085bee732d6",
+      "state_dict_numel_including_tied_aliases": 67220992,
+      "tensor_count": 54
+    },
+    {
+      "architecture_integrity": {
+        "problems": [],
+        "status": "compatible_with_recorded_config"
+      },
+      "bytes": 165974661,
+      "checkpoint_file": "model.pt",
+      "checkpoint_run_dir": "v=004acfd1__20250919T153155Z",
+      "current_runtime_compatibility": {
+        "current_dual_layer_norm_keys": 0,
+        "historical_shared_layer_norm_keys": 10,
+        "reason": "The 2025 checkpoint has one shared LayerNorm per transformer block (.ln); the current model has distinct attention and MLP LayerNorms (.ln1 and .ln2). Loading it into the current runtime would require a scientifically consequential migration rule.",
+        "status": "incompatible"
+      },
+      "evaluation": {
+        "reason": "The exact historical validation artifact and dataset revision are not preserved, the seed is missing, and the current runtime is not architecture-compatible. A new evaluation would not be comparable enough to strengthen the recovered claim.",
+        "status": "not_run"
+      },
+      "payload_keys": [
+        "state_dict"
+      ],
+      "run_id": "kh1vl1i7",
+      "sha256": "91d091f07346343b0118c0a0d0bd8c764982b19610000015ac4302d1a6b4a934",
+      "state_dict_numel_including_tied_aliases": 67220992,
+      "tensor_count": 54
+    },
+    {
+      "architecture_integrity": {
+        "problems": [],
+        "status": "compatible_with_recorded_config"
+      },
+      "bytes": 165974661,
+      "checkpoint_file": "model.pt",
+      "checkpoint_run_dir": "v=004acfd1__20250919T153818Z",
+      "current_runtime_compatibility": {
+        "current_dual_layer_norm_keys": 0,
+        "historical_shared_layer_norm_keys": 10,
+        "reason": "The 2025 checkpoint has one shared LayerNorm per transformer block (.ln); the current model has distinct attention and MLP LayerNorms (.ln1 and .ln2). Loading it into the current runtime would require a scientifically consequential migration rule.",
+        "status": "incompatible"
+      },
+      "evaluation": {
+        "reason": "The exact historical validation artifact and dataset revision are not preserved, the seed is missing, and the current runtime is not architecture-compatible. A new evaluation would not be comparable enough to strengthen the recovered claim.",
+        "status": "not_run"
+      },
+      "payload_keys": [
+        "state_dict"
+      ],
+      "run_id": "mx3a2a0x",
+      "sha256": "3d81073317d633636054b95bfc51c2bbaa47d7749f752c4f537def4797645405",
+      "state_dict_numel_including_tied_aliases": 67220992,
+      "tensor_count": 54
+    }
+  ],
+  "conclusion": "All three weights-only payloads are intact and match the recorded legacy architecture dimensions, but none is directly compatible with the current dual-LayerNorm runtime. Retrospective validation was not run.",
+  "evaluation_count": 0,
+  "schema_version": 1,
+  "selected_run_ids": [
+    "zrnf1np4",
+    "kh1vl1i7",
+    "mx3a2a0x"
+  ]
+}
