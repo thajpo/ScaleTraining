@@ -1,0 +1,5 @@
+{"used tokens": 1000000, "train_per_token_loss": 9.0, "lr": 0.02}
+{"used tokens": 2000000, "train_per_token_loss": 6.0, "lr": 0.019}
+{"used tokens": 3000000, "train_per_token_loss": 4.0, "lr": 0.018}
+{"used tokens": 3000000, "train_per_token_loss": 3.9, "lr": 0.018}
+{"used tokens": "invalid", "train_per_token_loss": 3.0}

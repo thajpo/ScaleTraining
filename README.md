@@ -4,6 +4,23 @@ ScaleTraining is a single-GPU language-model training harness for dense and Mixt
 
 The repo is intentionally reviewable without a GPU. The default verification path runs unit tests and an offline CPU end-to-end smoke over a tiny local text fixture, then proves the same artifact contract used for larger runs.
 
+## Recovered Experiment: Auxiliary LR Matters
+
+Six existing 41.5M-parameter TinyStories runs held the architecture, data,
+40M-token budget, scheduler, dropout, and Muon matrix LR fixed while varying
+only the learning rate for AdamW-managed embeddings, output head, biases, and
+normalization parameters. The promising observed region was `0.025`–`0.03`;
+`0.1` was clearly too aggressive. This is a single-run, training-loss result—not
+a validation or generalization claim.
+
+![Recovered training-loss curves across auxiliary AdamW learning rates](research/figures/auxiliary-lr-loss-curves.svg)
+
+![Comparable training loss near nine million tokens](research/figures/auxiliary-lr-common-horizon.svg)
+
+The [experimental closeout](research/scale_training_closeout.md) preserves the
+six-run result table, corrected historical optimizer semantics, checkpoint audit,
+limitations, reproduction commands, and supplementary terminal-outcome plot.
+
 ## What This Demonstrates
 
 - Hydra-based experiment configuration with small overrideable config groups.
@@ -19,7 +36,8 @@ The repo is intentionally reviewable without a GPU. The default verification pat
 
 - [docs/architecture.md](docs/architecture.md): reviewer-facing architecture and engineering claims.
 - [docs/reviewer-demo.md](docs/reviewer-demo.md): non-heavy commands to inspect the package and tests.
-- [notes/architecture.md](notes/architecture.md): deeper internal design notes and cleanup plan.
+- [research/scale_training_closeout.md](research/scale_training_closeout.md): recovered experiment, plots, source run IDs, and archive decision.
+- [notes/architecture.md](notes/architecture.md): deeper internal design notes and closeout record.
 
 ## Quick Verification
 
@@ -195,33 +213,39 @@ recorded under `model/*`:
 - `model/total_params`, `model/trainable_params`, and fp32/bf16 size estimates
   are fixed metadata in W&B history and summary.
 
-The local bundle intentionally does not duplicate this detailed history.
+Ordinary run bundles intentionally do not duplicate this detailed history. The
+closeout is a bounded exception: it commits normalized loss histories for the
+six selected legacy runs so its plots remain reproducible without the original
+W&B archives.
 
 ## Closeout Status
 
-The training harness is substantially complete: the quick tests, syntax
-compilation, and offline CPU prepare → train → evaluate → report path validate
-the software and artifact contracts. This is strong systems evidence, but it is
-not yet a differentiated experimental conclusion.
+The training harness and its bounded experimental closeout are complete. The
+quick tests, syntax compilation, and offline CPU prepare → train → evaluate →
+report path validate the software and artifact contracts. The recovered
+TinyStories study adds one traceable conclusion: hybrid Muon training was
+sensitive to the AdamW-managed auxiliary parameter LR, with `0.025`–`0.03` the
+strongest observed region in the archived single-run histories.
 
 Known limitations:
 
 - Checkpoints contain model weights and model configuration, but not optimizer,
   token-progress, or RNG state. Exact interruption/resume equivalence is not
   supported.
-- Historical checkpoints that lack validation and report sidecars are not
-  treated as experimental evidence.
+- Historical checkpoints that lack validation and report sidecars are treated
+  only as integrity-audited weights; the closeout does not claim validation or
+  benchmark results for them.
 - CPU smoke runs prove wiring and reproducibility surfaces, not model quality.
+- The recovered sweep lacks seeds, equal terminal horizons, validation history,
+  and a pinned historical dataset revision.
 
-The remaining closeout target is one controlled, modest experiment with fixed
-fingerprints, token budgets, evaluation settings, and appropriate seeds. Keep
-its detailed history in W&B, retain the compact run reports, and write down a
-specific conclusion. Any follow-up tooling should directly serve that study;
-do not add multi-GPU or generic platform features simply to expand the feature
-list.
+Any future work should begin with a new, explicitly scoped research question
+and should use the current evidence schema from the start. Do not add multi-GPU
+or generic platform features simply to expand the feature list.
 
-Raw `outputs/` directories and model weights stay ignored. Only compact,
-reviewable evidence summaries should be committed.
+Raw `outputs/` directories and model weights stay ignored. Commit only bounded,
+reviewer-facing evidence such as run reports and the normalized histories and
+plots used by this closeout.
 
 ## Configuration
 
@@ -281,6 +305,8 @@ Implemented and tested in the quick suite:
 - reproducible eval sidecars and run reports,
 - configured training seed for controlled comparisons,
 - offline CPU smoke path over local fixture data,
+- legacy archive parsing, control validation, static plot rendering, and
+  checkpoint schema auditing,
 - batch packing,
 - optimizer smoke behavior.
 

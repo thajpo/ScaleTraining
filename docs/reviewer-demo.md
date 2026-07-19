@@ -28,6 +28,22 @@ Run the offline CPU end-to-end smoke:
 uv run python scripts/smoke_cpu_e2e.py
 ```
 
+## Inspect The Recovered Experiment
+
+Read the [experimental closeout](../research/scale_training_closeout.md) for the
+six source run IDs, corrected optimizer semantics, bounded result, checkpoint
+compatibility finding, and archive decision. Regenerate all three figures from
+the committed normalized histories:
+
+```bash
+uv run python scripts/plot_legacy_experiment.py
+```
+
+The renderer requires neither network access nor model training. Rebuilding the
+inventory or checkpoint audit requires the original ignored W&B archives or
+checkpoint directory, so those provenance-maintenance commands are documented
+in the closeout rather than required for a reviewer demo.
+
 ## Inspect The Training Workflow
 
 Show the happy path without executing a long run:
@@ -85,4 +101,6 @@ tokens, stop reason, and incomplete gradient accumulation when present.
 - Testable entrypoints and model/data-processing contracts.
 - Token-indexed W&B tracking linked from compact local run evidence.
 - Automatically refreshed eval sidecars and reviewer-readable run reports.
+- Traceable legacy-run recovery with deterministic plots and bounded checkpoint
+  compatibility evidence.
 - A hardware-agnostic CPU smoke path that exercises the artifact contract.

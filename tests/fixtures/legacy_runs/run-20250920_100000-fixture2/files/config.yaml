@@ -1,0 +1,25 @@
+logging:
+  value:
+    wandb_project_name: tiny-stories-base
+model:
+  value:
+    accum_steps: 4
+    attn_dropout: 0.2
+    baseline_adam_config:
+      lr: 0.0001
+    batch_size: 32
+    lr: 0.01
+    max_seq_len: 1000
+    max_train_tokens: 10000000
+    n_embed: 512
+    n_head: 8
+    n_hidden: 2048
+    n_layer: 5
+    primary_optimizer: muon
+    resid_dropout: 0.2
+    use_baseline_adam: true
+    use_moe: false
+tokenizer:
+  value:
+    hf_dataset_names: roneneldan/TinyStories
+    tokenizer_name: EleutherAI/gpt-neo-125M

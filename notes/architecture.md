@@ -17,12 +17,16 @@ boundaries. It is a shared reference for design decisions and review.
 5) Perplexity and lm-eval entrypoints write provenance-checked sidecars beside
    the checkpoint and refresh the reports.
 6) Generation can run on a checkpoint for qualitative inspection.
+7) Historical closeout scripts recover W&B metadata and selected loss histories,
+   render static figures, and audit representative legacy checkpoints into
+   committed evidence without loading those weights into the current runtime.
 
 Entrypoints map to steps as follows:
 - `prepare_data.py` handles step (2) explicitly (offline prep).
 - `train.py` handles steps (1) through (4) and requires preprocessed artifacts.
 - `run_evals.py` and `run_lm_eval.py` handle step (5).
 - `generate_from_pretrained.py` handles step (6).
+- The three research scripts handle step (7).
 
 ### Entrypoints
 - `src/scaletraining/entrypoints/train.py`
@@ -41,6 +45,14 @@ Entrypoints map to steps as follows:
     `lm_eval_results.json`, and refreshes the run report.
 - `src/scaletraining/entrypoints/generate_from_pretrained.py`
   - Loads checkpoint + tokenizer and generates text from a prompt.
+- `scripts/recover_legacy_runs.py`
+  - Classifies readable local W&B archives and normalizes the six selected loss
+    histories after validating their recorded controls.
+- `scripts/plot_legacy_experiment.py`
+  - Renders three dependency-free SVGs from the committed normalized histories.
+- `scripts/audit_legacy_checkpoints.py`
+  - Checks three representative legacy state dictionaries against their
+    expected key/shape schema and records current runtime incompatibility.
 
 ### Data pipeline
 - Dataset specs live in `cfg.tokenizer.dataset_names` + `cfg.tokenizer.dataset_tag`.
@@ -128,16 +140,18 @@ The remaining tradeoffs are:
   revisions, or implicit behavior.
 - Checkpoints remain weights-only; exact resume would require optimizer,
   progress, and RNG state plus an equivalence test.
-- The harness still needs one controlled experiment and a written conclusion;
-  additional generic platform work is not the closeout goal.
+- The recovered TinyStories study is training-only, has one run per setting,
+  and mixes terminal horizons; its conclusion is an observed auxiliary-LR
+  region rather than a validation or generalization claim.
 
 ## Closeout Architecture
 
 ### Principles
 - One happy path for standard training and evaluation.
 - One primary data pipeline for most users.
-- W&B owns detailed token-indexed history; compact local reports own reviewer
-  evidence and links back to W&B.
+- W&B owns detailed token-indexed history for current runs; compact local reports
+  own reviewer evidence and links back to W&B. The six normalized legacy
+  histories committed for the closeout are a deliberate bounded exception.
 - Evaluation uses training data conventions, shared loaders, and validated
   checkpoint/dataset provenance.
 - Data preparation is explicit: training never auto-tokenizes or auto-packs.
@@ -170,14 +184,17 @@ The remaining tradeoffs are:
 - Default text fields for `PleIAs/SYNTH`: concatenate `query` + `synthetic_answer` (and optionally
   `synthetic_reasoning` if you want chain-of-thought style data).
 
-## Remaining Closeout
+## Completed Closeout
 
-1) Recover historical runs, but classify checkpoints without matching validation
-   and report sidecars as unverified artifacts.
-2) Run one controlled, modest experiment with fixed fingerprints, budgets,
-   evaluation settings, and appropriate seeds.
-3) Preserve its compact reports and write a specific conclusion backed by the
-   W&B history.
+1) Classified 109 readable W&B archives while preserving source run IDs and
+   corrected effective optimizer wiring.
+2) Recovered one six-run TinyStories study from full archived loss histories and
+   preserved a bounded auxiliary-AdamW-LR conclusion with deterministic plots.
+3) Integrity-audited three representative checkpoints, recorded their
+   incompatibility with the current dual-LayerNorm runtime, and did not invent a
+   migration or retrospective validation result.
+4) Archived the decision in `research/scale_training_closeout.md`. Further work
+   begins only with a new, explicit research question.
 
 ## MoE Routing Metrics
 - Log lightweight routing stats during training when MoE is enabled.
