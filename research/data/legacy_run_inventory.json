@@ -2,19 +2,23 @@
   "runs": [
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204725-0fjyjdt6",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -47,29 +51,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": 40923648,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_130528-0g368our",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "0c84975a2ddf279f130315e676bd73c4ef11451b",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "0g368our",
       "started_at": "2025-09-21T17:05:28.721516Z",
       "sweep_name": "grid",
@@ -77,34 +85,38 @@
         "tokens": 13117176,
         "train_loss_per_token": 6.978801336983662
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/0g368our"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_223930-1gexv8o3",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -137,27 +149,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_074953-1k18eubw",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "1k18eubw",
@@ -169,42 +185,46 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/1k18eubw"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085137-1l4fvrt2",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "1l4fvrt2",
       "started_at": "2025-09-25T12:51:37.047687Z",
       "sweep_name": "grid",
@@ -212,34 +232,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/1l4fvrt2"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_211639-1rkb4mkt",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -272,19 +296,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_205711-1z609hyx",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.35,
         "auxiliary_optimizer": "adamw",
@@ -317,27 +345,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075106-22r57jsw",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "22r57jsw",
@@ -349,42 +381,46 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/22r57jsw"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_123231-22vfk4o8",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "22vfk4o8",
       "started_at": "2025-09-21T16:32:31.584021Z",
       "sweep_name": "grid",
@@ -392,27 +428,31 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/22vfk4o8"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 6,
-        "use_moe": null
+        "parameter_count_recorded": 44075008,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_185133-2enb133f",
       "config_complete": true,
@@ -423,15 +463,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "2enb133f",
@@ -443,32 +483,36 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 4,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/2enb133f"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202242-2jb7enio",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.001,
         "auxiliary_optimizer": "adamw",
@@ -501,29 +545,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085128-2pcpdkj0",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "2pcpdkj0",
       "started_at": "2025-09-25T12:51:28.779592Z",
       "sweep_name": "grid",
@@ -531,27 +579,31 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/2pcpdkj0"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_185050-2pktj58t",
       "config_complete": true,
@@ -562,15 +614,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "2pktj58t",
@@ -582,32 +634,36 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/2pktj58t"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072614-2s5p7sbe",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -640,19 +696,23 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_113819-31377z9j",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.005,
         "auxiliary_optimizer": "adamw",
@@ -685,29 +745,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_124117-32x4au0r",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "32x4au0r",
       "started_at": "2025-09-21T16:41:17.743648Z",
       "sweep_name": "grid",
@@ -715,34 +779,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/32x4au0r"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202421-37sj5r01",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.0005,
         "auxiliary_optimizer": "adamw",
@@ -775,19 +843,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073736-3p6m85z7",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -820,19 +892,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_212829-52yyfzei",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -865,19 +941,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203556-5abay4zu",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.0005,
         "auxiliary_optimizer": "adamw",
@@ -910,29 +990,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085129-5n3y8i0l",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "5n3y8i0l",
       "started_at": "2025-09-25T12:51:29.866959Z",
       "sweep_name": "grid",
@@ -940,34 +1024,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/5n3y8i0l"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073910-5pd1ytof",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1000,19 +1088,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_223124-5ubrztsi",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1045,19 +1137,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204230-63f76g99",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -1090,29 +1186,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085131-6as8lgwx",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "6as8lgwx",
       "started_at": "2025-09-25T12:51:31.063189Z",
       "sweep_name": "grid",
@@ -1120,34 +1220,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/6as8lgwx"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_201924-6phuvuwh",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.01,
         "auxiliary_optimizer": "adamw",
@@ -1180,19 +1284,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_205218-7aeui4b9",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.7,
         "auxiliary_optimizer": "adamw",
@@ -1225,19 +1333,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_210205-7q4sdxts",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.5,
         "auxiliary_optimizer": "adamw",
@@ -1270,19 +1382,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202919-9g4h6h98",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.05,
         "auxiliary_optimizer": "adamw",
@@ -1315,19 +1431,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_210344-9wbm764t",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.4,
         "auxiliary_optimizer": "adamw",
@@ -1360,19 +1480,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072118-ac9chy9g",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1405,29 +1529,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085135-amxzdc2s",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "amxzdc2s",
       "started_at": "2025-09-25T12:51:35.892156Z",
       "sweep_name": "grid",
@@ -1435,34 +1563,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/amxzdc2s"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_215425-arjqlg4t",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1495,19 +1627,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073249-awiqo998",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1540,27 +1676,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_073914-b6rcniqd",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "b6rcniqd",
@@ -1572,32 +1712,36 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/b6rcniqd"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_210700-bszakh1i",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.3,
         "auxiliary_optimizer": "adamw",
@@ -1630,19 +1774,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_213508-c0aj59yy",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1675,19 +1823,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204409-ck56xcda",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -1720,29 +1872,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_124327-cl9d8qjt",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "cl9d8qjt",
       "started_at": "2025-09-21T16:43:27.944808Z",
       "sweep_name": "grid",
@@ -1750,34 +1906,38 @@
         "tokens": 6550400,
         "train_loss_per_token": 26.57637987756473
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/cl9d8qjt"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_221958-cs683gl8",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1810,29 +1970,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085133-cu2bnn22",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "cu2bnn22",
       "started_at": "2025-09-25T12:51:33.543506Z",
       "sweep_name": "grid",
@@ -1840,34 +2004,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/cu2bnn22"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_214746-e03ht3ex",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1900,19 +2068,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_071817-e2iju50x",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -1945,19 +2117,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203058-e3cxrdph",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.01,
         "auxiliary_optimizer": "adamw",
@@ -1990,19 +2166,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204547-eamsdjtv",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -2035,27 +2215,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_072402-ec47n9hg",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "ec47n9hg",
@@ -2067,40 +2251,44 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/ec47n9hg"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075530-em3vkb0t",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "em3vkb0t",
@@ -2112,32 +2300,36 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/em3vkb0t"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_111252-emdbrww3",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.1,
         "auxiliary_optimizer": "adamw",
@@ -2170,12 +2362,16 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_184742-fcdmyl73",
       "config_complete": true,
@@ -2186,15 +2382,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "fcdmyl73",
@@ -2206,32 +2402,36 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/fcdmyl73"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202600-g3wd3u4e",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.0001,
         "auxiliary_optimizer": "adamw",
@@ -2264,12 +2464,16 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_182739-hsoy7g0i",
       "config_complete": true,
@@ -2280,15 +2484,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "hsoy7g0i",
@@ -2300,42 +2504,46 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/hsoy7g0i"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": 40923648,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_130908-i1c2obr0",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "0c84975a2ddf279f130315e676bd73c4ef11451b",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "i1c2obr0",
       "started_at": "2025-09-21T17:09:08.766300Z",
       "sweep_name": "grid",
@@ -2343,34 +2551,38 @@
         "tokens": 38172456,
         "train_loss_per_token": 5.589110122197797
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/i1c2obr0"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_225858-i2vt865n",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -2403,19 +2615,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073110-i8ihf91v",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -2448,19 +2664,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202103-iajcywwj",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.005,
         "auxiliary_optimizer": "adamw",
@@ -2493,19 +2713,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_205356-ihn39uly",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.5,
         "auxiliary_optimizer": "adamw",
@@ -2538,19 +2762,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204904-ilqsrfak",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -2583,19 +2811,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072930-itl2h5mm",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -2628,19 +2860,23 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_112522-kh1vl1i7",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.025,
         "auxiliary_optimizer": "adamw",
@@ -2673,29 +2909,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_125946-mmdouzi5",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "0c84975a2ddf279f130315e676bd73c4ef11451b",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "mmdouzi5",
       "started_at": "2025-09-21T16:59:46.169176Z",
       "sweep_name": "grid",
@@ -2703,42 +2943,46 @@
         "tokens": 524032,
         "train_loss_per_token": 422.27016670737663
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/mmdouzi5"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075547-mqfp919j",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "mqfp919j",
@@ -2750,32 +2994,36 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/mqfp919j"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_113155-mx3a2a0x",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.01,
         "auxiliary_optimizer": "adamw",
@@ -2808,19 +3056,23 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_111922-mxj0pn09",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.03,
         "auxiliary_optimizer": "adamw",
@@ -2853,19 +3105,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_201607-n4bp0bwv",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.1,
         "auxiliary_optimizer": "adamw",
@@ -2898,29 +3154,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_124735-n9121xvz",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "n9121xvz",
       "started_at": "2025-09-21T16:47:35.291319Z",
       "sweep_name": "grid",
@@ -2928,34 +3188,38 @@
         "tokens": 262016,
         "train_loss_per_token": 494.634686431363
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/n9121xvz"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203915-ni98qjwl",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -2988,19 +3252,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073427-npy9cnnn",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3033,19 +3301,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203237-nqa4znk5",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.005,
         "auxiliary_optimizer": "adamw",
@@ -3078,19 +3350,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_205534-odl6fzuf",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.4,
         "auxiliary_optimizer": "adamw",
@@ -3123,19 +3399,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_210028-oegufa46",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.7,
         "auxiliary_optimizer": "adamw",
@@ -3168,19 +3448,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_220707-or63wpf6",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3213,19 +3497,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_071646-oycxyb9g",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3258,12 +3546,16 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_183830-p0vzd2ty",
       "config_complete": true,
@@ -3274,15 +3566,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "p0vzd2ty",
@@ -3294,42 +3586,46 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/p0vzd2ty"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": 47226368,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_124806-ph770myg",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "ph770myg",
       "started_at": "2025-09-21T16:48:06.138259Z",
       "sweep_name": "grid",
@@ -3337,27 +3633,31 @@
         "tokens": 26201600,
         "train_loss_per_token": 5.692479657730826
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/ph770myg"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_184714-pv5rppv9",
       "config_complete": true,
@@ -3368,15 +3668,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "pv5rppv9",
@@ -3388,32 +3688,36 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/pv5rppv9"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072752-q3xiien4",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3446,19 +3750,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_071948-q4t7fimt",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3491,19 +3799,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203417-qf7rab8j",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.001,
         "auxiliary_optimizer": "adamw",
@@ -3536,19 +3848,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_073602-qi3o6ocv",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3581,27 +3897,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_072852-qjbjmagg",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "qjbjmagg",
@@ -3613,32 +3933,36 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/qjbjmagg"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072435-qndjqix5",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3671,19 +3995,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_214108-qpah3ofw",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3716,19 +4044,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_221340-qq8e0c4t",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3761,27 +4093,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_073609-qx8579oa",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "qx8579oa",
@@ -3793,32 +4129,36 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/qx8579oa"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_201746-rp6u54ye",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.05,
         "auxiliary_optimizer": "adamw",
@@ -3851,19 +4191,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_220032-ruba636q",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3896,19 +4240,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_072256-rv6bjvz7",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -3941,19 +4289,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_204053-s266jyt7",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": null,
         "auxiliary_optimizer": null,
@@ -3986,19 +4338,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_210522-s2ay3242",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.35,
         "auxiliary_optimizer": "adamw",
@@ -4031,27 +4387,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_073950-s93g31mz",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "s93g31mz",
@@ -4063,40 +4423,44 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/s93g31mz"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075007-skvs9ijw",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "skvs9ijw",
@@ -4108,32 +4472,36 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/skvs9ijw"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_205849-swmxjfez",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.3,
         "auxiliary_optimizer": "adamw",
@@ -4166,27 +4534,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_074214-t7b5e2ed",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "t7b5e2ed",
@@ -4198,42 +4570,46 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/t7b5e2ed"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_135157-t85dh4or",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "0c84975a2ddf279f130315e676bd73c4ef11451b",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "t85dh4or",
       "started_at": "2025-09-21T17:51:57.932370Z",
       "sweep_name": "grid",
@@ -4241,42 +4617,46 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/t85dh4or"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_074610-u0tiq7b9",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "u0tiq7b9",
@@ -4288,32 +4668,36 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/u0tiq7b9"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_224812-u89704cr",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -4346,27 +4730,31 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_072153-usrxuy09",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": "math_dataset/arithmetic__mul",
       "dataset_tag": "",
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "usrxuy09",
@@ -4378,42 +4766,46 @@
       },
       "tokenizer": "EleutherAI/gpt-neo-125M",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/usrxuy09"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085132-v6umfy1s",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "v6umfy1s",
       "started_at": "2025-09-25T12:51:32.316693Z",
       "sweep_name": "grid",
@@ -4421,42 +4813,46 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/v6umfy1s"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075338-vgnzp3lz",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "vgnzp3lz",
@@ -4468,40 +4864,44 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/vgnzp3lz"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075420-vo1rbrwi",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "vo1rbrwi",
@@ -4513,25 +4913,29 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/vo1rbrwi"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_184459-w10u5m57",
       "config_complete": true,
@@ -4542,15 +4946,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "w10u5m57",
@@ -4562,40 +4966,44 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/w10u5m57"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 1000,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 5,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250921_075318-w2g3660f",
-      "config_complete": false,
+      "config_complete": true,
       "dataset": null,
       "dataset_tag": null,
       "git_commit": "0f8af546e3fafa6ca74a9a2b2b2ae1a8cfb3b7a0",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "tiny-stories-base",
       "run_id": "w2g3660f",
@@ -4607,25 +5015,29 @@
       },
       "tokenizer": null,
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 32,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/w2g3660f"
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 2048,
         "n_embed": 896,
         "n_head": 14,
         "n_hidden": 4864,
         "n_layer": 24,
-        "use_moe": null
+        "parameter_count_recorded": 330570496,
+        "use_moe": false,
+        "vocab_size": 49152
       },
       "archive": "run-20260128_184846-w8f64jt7",
       "config_complete": true,
@@ -4636,15 +5048,15 @@
         null
       ],
       "git_commit": "234e3c495440a69829d3fe2c062576998136d35e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
       "project": "fine-web-pretrain",
       "run_id": "w8f64jt7",
@@ -4656,42 +5068,46 @@
       },
       "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
+        "accum_steps": 3,
         "attn_dropout": 0.2,
-        "batch_size": null,
-        "lr_schedule": null,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
         "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 1000000,
+        "warmup_tokens": 1000000
       },
       "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/w8f64jt7"
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 512,
+        "n_head": 8,
+        "n_hidden": 2048,
+        "n_layer": 7,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250921_124636-wf9z0ru2",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "refined-web-mix",
+      "dataset_tag": "",
       "git_commit": "42ee736efeb028fc3e68a84e28a9b2e222b27e37",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "fine-web-pretrain",
       "run_id": "wf9z0ru2",
       "started_at": "2025-09-21T16:46:36.969270Z",
       "sweep_name": "grid",
@@ -4699,34 +5115,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 4,
+        "attn_dropout": 0.2,
+        "batch_size": 16,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 40000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/fine-web-pretrain/runs/wf9z0ru2"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_202739-xd3yv5jk",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.1,
         "auxiliary_optimizer": "adamw",
@@ -4759,19 +5179,23 @@
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_071515-y7m0x70j",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "f890f9950b4b13fce94ed1fd6384889f2d725aa5",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.02,
         "auxiliary_optimizer": "adamw",
@@ -4804,29 +5228,33 @@
     },
     {
       "architecture": {
-        "max_seq_len": null,
-        "n_embed": null,
-        "n_head": null,
-        "n_hidden": null,
-        "n_layer": null,
-        "use_moe": null
+        "UE_bias": false,
+        "bias": true,
+        "max_seq_len": 2048,
+        "n_embed": 896,
+        "n_head": 14,
+        "n_hidden": 4864,
+        "n_layer": 24,
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250925_085134-ywun34vh",
-      "config_complete": false,
-      "dataset": null,
-      "dataset_tag": null,
+      "config_complete": true,
+      "dataset": "roneneldan/TinyStories-1M",
+      "dataset_tag": "",
       "git_commit": "9c57abda611e8476b0b2a984924175aa360a60e7",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
-        "auxiliary_lr": null,
-        "auxiliary_optimizer": null,
-        "effective_wiring": null,
-        "matrix_lr": null,
-        "matrix_optimizer": null,
-        "recorded_primary": null,
-        "use_baseline_adam": null
+        "auxiliary_lr": 0.02,
+        "auxiliary_optimizer": "adamw",
+        "effective_wiring": "muon_matrices_plus_adamw_auxiliary",
+        "matrix_lr": 0.02,
+        "matrix_optimizer": "muon",
+        "recorded_primary": "muon",
+        "use_baseline_adam": false
       },
-      "project": null,
+      "project": "logits_sweep_tinystories",
       "run_id": "ywun34vh",
       "started_at": "2025-09-25T12:51:34.723170Z",
       "sweep_name": "grid",
@@ -4834,34 +5262,38 @@
         "tokens": null,
         "train_loss_per_token": null
       },
-      "tokenizer": null,
+      "tokenizer": "bigcode/starcoder2-tokenizer",
       "training": {
-        "accum_steps": null,
-        "attn_dropout": null,
-        "batch_size": null,
-        "lr_schedule": null,
-        "resid_dropout": null,
+        "accum_steps": 3,
+        "attn_dropout": 0.2,
+        "batch_size": 24,
+        "lr_schedule": "cosine",
+        "resid_dropout": 0.2,
         "seed": null,
-        "token_budget": null,
-        "warmup_tokens": null
+        "token_budget": 10000000,
+        "warmup_tokens": 1000000
       },
-      "url": null
+      "url": "https://wandb.ai/thajpo/logits_sweep_tinystories/runs/ywun34vh"
     },
     {
       "architecture": {
+        "UE_bias": null,
+        "bias": null,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": null,
+        "use_moe": false,
+        "vocab_size": null
       },
       "archive": "run-20250917_203735-zjukv2pj",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "eeba1ceaaf09a7643b06f40cf76f7d4326ccb74e",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.0001,
         "auxiliary_optimizer": "adamw",
@@ -4894,19 +5326,23 @@
     },
     {
       "architecture": {
+        "UE_bias": false,
+        "bias": true,
         "max_seq_len": 1000,
         "n_embed": 512,
         "n_head": 8,
         "n_hidden": 2048,
         "n_layer": 5,
-        "use_moe": false
+        "parameter_count_recorded": 41489408,
+        "use_moe": false,
+        "vocab_size": 50257
       },
       "archive": "run-20250919_111430-zrnf1np4",
       "config_complete": true,
       "dataset": "roneneldan/TinyStories",
       "dataset_tag": "",
       "git_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
-      "history_present": true,
+      "history_file_present": true,
       "optimizer": {
         "auxiliary_lr": 0.07,
         "auxiliary_optimizer": "adamw",
@@ -4938,8 +5374,10 @@
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/zrnf1np4"
     }
   ],
-  "schema_version": 1,
+  "schema_version": 2,
   "source": {
+    "history_classification": "file_presence_only",
+    "history_file_count": 109,
     "kind": "local_wandb_archives",
     "run_count": 109
   }

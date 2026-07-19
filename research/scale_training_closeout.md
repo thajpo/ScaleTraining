@@ -31,20 +31,22 @@ sidecars or canonical run reports.
 
 | Classification | Recovered count |
 | --- | ---: |
-| W&B archives with readable configs and history | 109 |
+| W&B archives with readable configs | 109 |
+| Archives with a history file present (presence only) | 109 |
+| Selected histories successfully parsed | 6 |
 | Runs with a finite terminal training loss | 70 |
 | `tiny-stories-base` project | 83 |
-| `fine-web-pretrain` project | 8 |
-| Project name not recorded | 18 |
-| TinyStories dataset recorded | 75 |
-| Five-layer, 512-wide architecture | 67 |
-| 24-layer, 896-wide architecture | 7 |
-| Muon matrices + auxiliary AdamW | 48 |
+| `fine-web-pretrain` project | 18 |
+| `logits_sweep_tinystories` project | 8 |
+| TinyStories dataset variant recorded | 83 |
+| Five-layer, 512-wide architecture | 85 |
+| Six-layer, 512-wide architecture | 1 |
+| Seven-layer, 512-wide architecture | 7 |
+| 24-layer, 896-wide architecture | 16 |
+| Muon matrices + auxiliary AdamW | 90 |
 | AdaMuon matrices + auxiliary AdamW | 12 |
 | AdamW over all parameters | 7 |
-| Optimizer wiring absent from legacy config | 42 |
-| 10M / 40M / 80M token budgets | 47 / 16 / 4 |
-| Token budget absent from legacy config | 42 |
+| 1M / 10M / 40M / 80M token budgets | 8 / 55 / 42 / 4 |
 | Seed absent from legacy config | 109 |
 
 The complete machine-readable classification is in
@@ -54,8 +56,9 @@ budget, terminal metrics, and the historical Git commit when available.
 
 ## Experiment Selection
 
-This family was selected because its six `model` configs differ in exactly one
-recorded field: `lr`.
+This family was selected because its six source `model` configs differ in
+exactly one recorded field: `lr`. Regeneration compares the source configs and
+historical Git commits and fails if any other recorded condition differs.
 
 | Fixed condition | Value |
 | --- | --- |
@@ -112,7 +115,7 @@ the promising region (`kh1vl1i7`, `0.025`), and low LR (`mx3a2a0x`, `0.01`).
 All three files:
 
 - deserialize as weights-only `state_dict` payloads,
-- match the recorded vocabulary width, embedding width, and five-block depth,
+- match all 54 keys and tensor shapes in the expected legacy dense-model schema,
 - have committed SHA-256 identities in
   [`data/checkpoint_compatibility.json`](data/checkpoint_compatibility.json).
 

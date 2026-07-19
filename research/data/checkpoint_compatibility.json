@@ -3,8 +3,12 @@
   "checkpoints": [
     {
       "architecture_integrity": {
+        "expected_tensor_count": 54,
+        "missing_keys": [],
         "problems": [],
-        "status": "compatible_with_recorded_config"
+        "shape_mismatches": {},
+        "status": "complete_legacy_schema_match",
+        "unexpected_keys": []
       },
       "bytes": 165974661,
       "checkpoint_file": "model.pt",
@@ -29,8 +33,12 @@
     },
     {
       "architecture_integrity": {
+        "expected_tensor_count": 54,
+        "missing_keys": [],
         "problems": [],
-        "status": "compatible_with_recorded_config"
+        "shape_mismatches": {},
+        "status": "complete_legacy_schema_match",
+        "unexpected_keys": []
       },
       "bytes": 165974661,
       "checkpoint_file": "model.pt",
@@ -55,8 +63,12 @@
     },
     {
       "architecture_integrity": {
+        "expected_tensor_count": 54,
+        "missing_keys": [],
         "problems": [],
-        "status": "compatible_with_recorded_config"
+        "shape_mismatches": {},
+        "status": "complete_legacy_schema_match",
+        "unexpected_keys": []
       },
       "bytes": 165974661,
       "checkpoint_file": "model.pt",
@@ -80,9 +92,9 @@
       "tensor_count": 54
     }
   ],
-  "conclusion": "All three weights-only payloads are intact and match the recorded legacy architecture dimensions, but none is directly compatible with the current dual-LayerNorm runtime. Retrospective validation was not run.",
+  "conclusion": "All three weights-only payloads match the complete expected legacy dense tensor key/shape schema, but none is directly compatible with the current dual-LayerNorm runtime. Retrospective validation was not run.",
   "evaluation_count": 0,
-  "schema_version": 1,
+  "schema_version": 2,
   "selected_run_ids": [
     "zrnf1np4",
     "kh1vl1i7",

@@ -2,11 +2,15 @@
   "comparison_horizon_tokens": 9000000,
   "experiment_id": "tiny_stories_muon_auxiliary_adamw_lr",
   "fixed_conditions": {
+    "UE_bias": false,
     "accum_steps": 4,
     "attn_dropout": 0.2,
     "batch_size": 32,
+    "bias": true,
     "dataset": "roneneldan/TinyStories",
+    "dataset_tag": "",
     "lr_schedule": "cosine",
+    "max_seq_len": 1000,
     "muon_matrix_lr": 0.02,
     "n_embed": 512,
     "n_head": 8,
@@ -16,6 +20,8 @@
     "resid_dropout": 0.2,
     "token_budget": 40000000,
     "tokenizer": "EleutherAI/gpt-neo-125M",
+    "use_moe": false,
+    "vocab_size": 50257,
     "warmup_tokens": 1000000
   },
   "hypothesis": "The AdamW learning rate for embeddings, output head, biases, and other non-Muon parameters materially affects hybrid Muon training dynamics.",
@@ -7681,8 +7687,12 @@
       "url": "https://wandb.ai/thajpo/tiny-stories-base/runs/31377z9j"
     }
   ],
-  "schema_version": 1,
+  "schema_version": 2,
   "source": {
+    "control_validation": {
+      "status": "passed",
+      "varied_source_field": "model.lr"
+    },
     "historical_code_commit": "8ce307041f0f3c753c860d546775301106b59b0c",
     "kind": "local_wandb_binary_history",
     "project": "tiny-stories-base",

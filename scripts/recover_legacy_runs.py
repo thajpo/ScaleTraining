@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from collections.abc import Iterable
+from copy import deepcopy
 import json
 import math
 from pathlib import Path
@@ -30,6 +31,30 @@ CHECKPOINT_RUN_DIRS = {
     "mx3a2a0x": "v=004acfd1__20250919T153818Z",
     "31377z9j": "v=004acfd1__20250919T154432Z",
 }
+EXPECTED_SWEEP_AUXILIARY_LRS = {0.005, 0.01, 0.025, 0.03, 0.07, 0.1}
+EXPECTED_SWEEP_FIXED_CONDITIONS = {
+    "dataset": "roneneldan/TinyStories",
+    "dataset_tag": "",
+    "tokenizer": "EleutherAI/gpt-neo-125M",
+    "vocab_size": 50257,
+    "n_layer": 5,
+    "n_head": 8,
+    "n_embed": 512,
+    "n_hidden": 2048,
+    "max_seq_len": 1000,
+    "bias": True,
+    "UE_bias": False,
+    "use_moe": False,
+    "parameter_count_recorded": 41489408,
+    "token_budget": 40000000,
+    "batch_size": 32,
+    "accum_steps": 4,
+    "attn_dropout": 0.2,
+    "resid_dropout": 0.2,
+    "lr_schedule": "cosine",
+    "warmup_tokens": 1000000,
+    "muon_matrix_lr": 0.02,
+}
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -47,6 +72,21 @@ def _unwrap(config: dict[str, Any], key: str) -> Any:
     if isinstance(value, dict) and "value" in value:
         return value["value"]
     return value
+
+
+def _read_config(path: Path) -> dict[str, Any]:
+    config = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(config, dict):
+        raise ValueError(f"Expected a mapping in {path}")
+    return config
+
+
+def _mapping_group(config: dict[str, Any], *keys: str) -> dict[str, Any]:
+    for key in keys:
+        value = _unwrap(config, key)
+        if isinstance(value, dict):
+            return value
+    return {}
 
 
 def _first(*values: Any) -> Any:
@@ -135,24 +175,18 @@ def parse_run_archive(run_dir: Path, *, entity: str = "thajpo") -> dict[str, Any
     """Parse the stable config/summary metadata from one local W&B run."""
 
     config_path = run_dir / "files" / "config.yaml"
-    config = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    if not isinstance(config, dict):
-        raise ValueError(f"Expected a mapping in {config_path}")
+    config = _read_config(config_path)
     summary = _read_json(run_dir / "files" / "wandb-summary.json")
     metadata = _read_json(run_dir / "files" / "wandb-metadata.json")
-    model = _unwrap(config, "model") or {}
-    tokenizer = _unwrap(config, "tokenizer") or {}
-    logging = _unwrap(config, "logging") or {}
-    sweep = _unwrap(config, "sweep") or {}
+    flat_config = {key: _unwrap(config, key) for key in config}
+    model = _mapping_group(config, "model", "transformer") or flat_config
+    optimizer = _mapping_group(config, "optimizer") or model
+    training = _mapping_group(config, "training", "train") or model
+    moe = _mapping_group(config, "moe") or model
+    tokenizer = _mapping_group(config, "tokenizer") or flat_config
+    logging = _mapping_group(config, "logging") or flat_config
+    sweep = _mapping_group(config, "sweep")
     wandb_config = _unwrap(config, "_wandb") or {}
-    if not isinstance(model, dict):
-        model = {}
-    if not isinstance(tokenizer, dict):
-        tokenizer = {}
-    if not isinstance(logging, dict):
-        logging = {}
-    if not isinstance(sweep, dict):
-        sweep = {}
 
     run_id = run_dir.name.rsplit("-", 1)[-1]
     project = logging.get("wandb_project_name")
@@ -171,6 +205,9 @@ def parse_run_archive(run_dir: Path, *, entity: str = "thajpo") -> dict[str, Any
         tokenizer.get("hf_dataset_names"),
         tokenizer.get("dataset_names"),
     )
+    parameter_count = _finite_number(
+        _first(summary.get("model/total_params"), summary.get("model.total_params"))
+    )
     return {
         "run_id": run_id,
         "archive": run_dir.name,
@@ -184,32 +221,39 @@ def parse_run_archive(run_dir: Path, *, entity: str = "thajpo") -> dict[str, Any
         "git_commit": _git_commit(wandb_config, metadata),
         "dataset": dataset,
         "dataset_tag": tokenizer.get("dataset_tag"),
-        "tokenizer": tokenizer.get("tokenizer_name"),
+        "tokenizer": _first(
+            tokenizer.get("tokenizer_name"),
+            tokenizer.get("pretrained_tokenizer_name"),
+        ),
         "architecture": {
+            "vocab_size": model.get("vocab_size"),
             "n_layer": model.get("n_layer"),
             "n_head": model.get("n_head"),
             "n_embed": model.get("n_embed"),
             "n_hidden": model.get("n_hidden"),
             "max_seq_len": model.get("max_seq_len"),
-            "use_moe": model.get("use_moe"),
+            "bias": model.get("bias"),
+            "UE_bias": model.get("UE_bias"),
+            "use_moe": _first(model.get("use_moe"), moe.get("use_moe")),
+            "parameter_count_recorded": parameter_count,
         },
-        "optimizer": _effective_optimizer(model),
+        "optimizer": _effective_optimizer(optimizer),
         "training": {
-            "token_budget": model.get("max_train_tokens"),
-            "batch_size": model.get("batch_size"),
-            "accum_steps": model.get("accum_steps"),
-            "seed": model.get("seed"),
+            "token_budget": training.get("max_train_tokens"),
+            "batch_size": training.get("batch_size"),
+            "accum_steps": training.get("accum_steps"),
+            "seed": training.get("seed"),
             "attn_dropout": model.get("attn_dropout"),
             "resid_dropout": model.get("resid_dropout"),
-            "lr_schedule": model.get("lr_schedule"),
-            "warmup_tokens": model.get("warmup_tokens"),
+            "lr_schedule": optimizer.get("lr_schedule"),
+            "warmup_tokens": optimizer.get("warmup_tokens"),
         },
         "sweep_name": sweep.get("name"),
         "terminal": {
             "train_loss_per_token": terminal_loss,
             "tokens": terminal_tokens,
         },
-        "history_present": bool(history_files or fixture_history.exists()),
+        "history_file_present": bool(history_files or fixture_history.exists()),
         "config_complete": bool(model and tokenizer),
     }
 
@@ -294,6 +338,102 @@ def read_loss_history(run_dir: Path) -> list[dict[str, float | int]]:
     return [by_tokens[token] for token in sorted(by_tokens)]
 
 
+def _source_config_without_auxiliary_lr(run_dir: Path) -> tuple[dict[str, Any], float]:
+    config = _read_config(run_dir / "files" / "config.yaml")
+    source = {
+        key: deepcopy(_unwrap(config, key))
+        for key in config
+        if key != "_wandb"
+    }
+    model = source.get("model")
+    if not isinstance(model, dict):
+        raise ValueError(f"Selected run {run_dir.name} does not record model.lr")
+    lr = _finite_number(model.pop("lr", None))
+    if lr is None:
+        raise ValueError(f"Selected run {run_dir.name} has no finite model.lr")
+    return source, float(lr)
+
+
+def _fixed_conditions(run: dict[str, Any]) -> dict[str, Any]:
+    architecture = run["architecture"]
+    optimizer = run["optimizer"]
+    training = run["training"]
+    return {
+        "dataset": run["dataset"],
+        "dataset_tag": run["dataset_tag"],
+        "tokenizer": run["tokenizer"],
+        "vocab_size": architecture["vocab_size"],
+        "n_layer": architecture["n_layer"],
+        "n_head": architecture["n_head"],
+        "n_embed": architecture["n_embed"],
+        "n_hidden": architecture["n_hidden"],
+        "max_seq_len": architecture["max_seq_len"],
+        "bias": architecture["bias"],
+        "UE_bias": architecture["UE_bias"],
+        "use_moe": architecture["use_moe"],
+        "parameter_count_recorded": architecture["parameter_count_recorded"],
+        "token_budget": training["token_budget"],
+        "batch_size": training["batch_size"],
+        "accum_steps": training["accum_steps"],
+        "attn_dropout": training["attn_dropout"],
+        "resid_dropout": training["resid_dropout"],
+        "lr_schedule": training["lr_schedule"],
+        "warmup_tokens": training["warmup_tokens"],
+        "muon_matrix_lr": optimizer["matrix_lr"],
+    }
+
+
+def _validate_sweep_controls(
+    run_dirs: dict[str, Path],
+    selected_runs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    baseline_config: dict[str, Any] | None = None
+    baseline_fixed: dict[str, Any] | None = None
+    auxiliary_lrs: list[float] = []
+    for run in selected_runs:
+        run_id = run["run_id"]
+        source_config, source_lr = _source_config_without_auxiliary_lr(
+            run_dirs[run_id]
+        )
+        fixed = _fixed_conditions(run)
+        if baseline_config is None:
+            baseline_config = source_config
+            baseline_fixed = fixed
+        elif source_config != baseline_config:
+            raise ValueError(
+                f"Selected run {run_id} differs outside the allowed model.lr field"
+            )
+        elif fixed != baseline_fixed:
+            raise ValueError(
+                f"Selected run {run_id} has inconsistent recorded fixed conditions"
+            )
+
+        if run["git_commit"] != HISTORICAL_CODE_COMMIT:
+            raise ValueError(
+                f"Selected run {run_id} records git commit {run['git_commit']!r}; "
+                f"expected {HISTORICAL_CODE_COMMIT}"
+            )
+        if run["optimizer"]["effective_wiring"] != (
+            "muon_matrices_plus_adamw_auxiliary"
+        ):
+            raise ValueError(
+                f"Selected run {run_id} does not use the expected hybrid Muon wiring"
+            )
+        if run["optimizer"]["auxiliary_lr"] != source_lr:
+            raise ValueError(
+                f"Selected run {run_id} does not map model.lr to auxiliary AdamW"
+            )
+        auxiliary_lrs.append(source_lr)
+
+    if len(set(auxiliary_lrs)) != len(auxiliary_lrs):
+        raise ValueError("Selected runs do not have one distinct model.lr per setting")
+    if baseline_fixed is None:
+        raise ValueError("No selected runs were provided")
+    if baseline_fixed["use_moe"] is not False:
+        raise ValueError("Selected runs are not the expected dense model family")
+    return baseline_fixed
+
+
 def build_sweep_payload(
     wandb_dir: Path,
     inventory: list[dict[str, Any]],
@@ -308,6 +448,14 @@ def build_sweep_payload(
     if missing:
         raise ValueError(f"Missing selected W&B archives: {', '.join(missing)}")
 
+    selected_runs = [by_id[run_id] for run_id in SWEEP_RUN_IDS]
+    fixed_conditions = _validate_sweep_controls(run_dirs, selected_runs)
+    if fixed_conditions != EXPECTED_SWEEP_FIXED_CONDITIONS:
+        raise ValueError("Selected runs do not match the documented fixed conditions")
+    if {
+        run["optimizer"]["auxiliary_lr"] for run in selected_runs
+    } != EXPECTED_SWEEP_AUXILIARY_LRS:
+        raise ValueError("Selected runs do not match the documented model.lr settings")
     selected = []
     for run_id in SWEEP_RUN_IDS:
         run = by_id[run_id]
@@ -344,35 +492,23 @@ def build_sweep_payload(
         )
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "experiment_id": "tiny_stories_muon_auxiliary_adamw_lr",
         "source": {
             "kind": "local_wandb_binary_history",
             "project": "tiny-stories-base",
             "run_ids": list(SWEEP_RUN_IDS),
             "historical_code_commit": HISTORICAL_CODE_COMMIT,
+            "control_validation": {
+                "status": "passed",
+                "varied_source_field": "model.lr",
+            },
         },
         "hypothesis": (
             "The AdamW learning rate for embeddings, output head, biases, and other "
             "non-Muon parameters materially affects hybrid Muon training dynamics."
         ),
-        "fixed_conditions": {
-            "dataset": "roneneldan/TinyStories",
-            "tokenizer": "EleutherAI/gpt-neo-125M",
-            "n_layer": 5,
-            "n_head": 8,
-            "n_embed": 512,
-            "n_hidden": 2048,
-            "parameter_count_recorded": 41489408,
-            "token_budget": 40000000,
-            "batch_size": 32,
-            "accum_steps": 4,
-            "attn_dropout": 0.2,
-            "resid_dropout": 0.2,
-            "lr_schedule": "cosine",
-            "warmup_tokens": 1000000,
-            "muon_matrix_lr": 0.02,
-        },
+        "fixed_conditions": fixed_conditions,
         "comparison_horizon_tokens": 9000000,
         "varied_parameter": {
             "name": "auxiliary_adamw_lr",
@@ -419,10 +555,14 @@ def main() -> None:
 
     inventory = scan_archives(args.wandb_dir, entity=args.entity)
     inventory_payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "source": {
             "kind": "local_wandb_archives",
             "run_count": len(inventory),
+            "history_classification": "file_presence_only",
+            "history_file_count": sum(
+                run["history_file_present"] for run in inventory
+            ),
         },
         "runs": inventory,
     }
